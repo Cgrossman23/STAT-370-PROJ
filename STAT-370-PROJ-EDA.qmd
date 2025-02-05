@@ -28,26 +28,42 @@ EDA <- EDA[,-c(11,12)]
 # make all var undercase
 
 EDA <- clean_names(EDA)
+
+# renaming response variables to better names
+
+colnames(EDA)[7] <- "presence_absence_sch"
+colnames(EDA)[8] <- "density_sch"
+colnames(EDA)[9] <- "presence_absence_typ"
+colnames(EDA)[10] <- "density_typ"
+names(EDA)
+
 ```
 
 # EDA
 
-## Structure Analysis
+##  Structure Analysis
 
 ```{r}
 #| echo: false 
-str(EDA) 
+# Changing columns 1,2, 7-15
+EDA[, c(1,2,7:15)] <- lapply(EDA[, c(1,2,7:15)], function(x) gsub("[^0-9.]", "", x))
+EDA[, c(1,2,7:15)] <- lapply(EDA[, c(1,2,7:15)], as.numeric)
+
+str(EDA)
+
 unique(EDA$transect) 
 unique(EDA$site_combined) 
-unique(EDA$site_individual) 
-summary(EDA$speed_limit)
+unique(EDA$site_individual)
+
+summary(EDA$presence_absence_sch)
+summary(EDA$presence_absence_typ)
+summary(EDA$density_sch)
+summary(EDA$density_typ)
 ```
 
--   There are 24 unique transects. What are these?
+-   There are 24 unique transects
 
 -   4 unique sites, 8 individual sites
-
--   Speed limit has little variable, 10 or 14 mph
 
 ## NA Assess
 
@@ -71,6 +87,16 @@ ggplot(EDA, aes(x = cost_small)) +
   theme_minimal()
 ```
 
+### Fetch Project
+
+```{r}
+#| echo: false
+ggplot(EDA, aes(x = fetch_projected)) +
+  geom_histogram(binwidth = 100, fill = "steelblue", color = "black") +
+  labs(title = "Distribution of Fetch Projected", x = "Fetch Projected", y = "Frequency") +
+  theme_minimal()
+```
+
 ### Water Depth
 
 ```{r}
@@ -82,18 +108,6 @@ ggplot(EDA, aes(x = water_depth)) +
 ```
 
 -   Fairly normal-ish
-
-### Fetch Projected
-
-```{r}
-#| echo: false
-ggplot(EDA, aes(x = fetch_projected)) +
-  geom_histogram(binwidth = 100, fill = "steelblue", color = "black") +
-  labs(title = "Distribution of Fetch Projected", x = "Fetch Projected", y = "Frequency") +
-  theme_minimal()
-```
-
--   Fairly uniform
 
 ### Slope
 
@@ -121,6 +135,214 @@ ggplot(EDA, aes(x = speed_limit)) +
 
 ## Scatter Plots Response Variable Against Explanatory
 
-```{r}
+### Cost
 
+#### Presence/Absence Against Cost
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = cost_small, y = presence_absence_sch)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Presence/Absence (SCH) Against Cost", 
+       x = "Cost", 
+       y = "Presence/Absence") +
+  theme_minimal()
+
+ggplot(EDA, aes(x = cost_small, y = presence_absence_typ)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Presence/Absence (TYP) Against Cost", 
+       x = "Cost", 
+       y = "Presence/Absence") +
+  theme_minimal()
+```
+
+#### Density Against Cost
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = cost_small, y = density_sch)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Density (SCH) Against Cost", 
+       x = "Cost", 
+       y = "Density") +
+  theme_minimal()
+
+ggplot(EDA, aes(x = cost_small, y = density_typ)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Density (TYP) Against Cost", 
+       x = "Cost", 
+       y = "Density") +
+  theme_minimal()
+```
+
+### Fetch Project
+
+#### Presence/Absence Against Fetch
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = fetch_projected, y = presence_absence_sch)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Presence/Absence (SCH) Against Fetch", 
+       x = "Fetch", 
+       y = "Presence/Absence") +
+  theme_minimal()
+
+ggplot(EDA, aes(x = fetch_projected, y = presence_absence_typ)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Presence/Absence (TYP) Against Fetch", 
+       x = "Fetch", 
+       y = "Presence/Absence") +
+  theme_minimal()
+```
+
+#### Density Against Fetch
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = fetch_projected, y = density_sch)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Density (SCH) Against Fetch", 
+       x = "Fetch", 
+       y = "Density") +
+  theme_minimal()
+
+ggplot(EDA, aes(x = fetch_projected, y = density_typ)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Density (TYP) Against Fetch", 
+       x = "Fetch", 
+       y = "Density") +
+  theme_minimal()
+```
+
+### Water Depth
+
+#### Presence/Absence Against Water Depth
+
+```{r}
+ggplot(EDA, aes(x = water_depth, y = presence_absence_sch)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Presence/Absence (SCH) Against Water Depth", 
+       x = "Water Depth", 
+       y = "Presence/Absence") +
+  theme_minimal()
+
+ggplot(EDA, aes(x = water_depth, y = presence_absence_typ)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Presence/Absence (TYP) Against Water Depth", 
+       x = "Water Depth", 
+       y = "Presence/Absence") +
+  theme_minimal()
+```
+
+#### Density Against Water Depth
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = water_depth, y = density_sch)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Density (SCH) Against Water Depth", 
+       x = "Water Depth", 
+       y = "Density") +
+  theme_minimal()
+
+ggplot(EDA, aes(x = water_depth, y = density_typ)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Density (TYP) Against Water Depth", 
+       x = "Water Depth", 
+       y = "Density") +
+  theme_minimal()
+```
+
+### Slope
+
+#### Presence/Absence Against Slope
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = slope_use, y = presence_absence_sch)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Presence/Absence (SCH) Against Slope", 
+       x = "Slope", 
+       y = "Presence/Absence") +
+  theme_minimal()
+
+ggplot(EDA, aes(x = slope_use, y = presence_absence_typ)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Presence/Absence (TYP) Against Slope", 
+       x = "Slope", 
+       y = "Presence/Absence") +
+  theme_minimal()
+```
+
+#### Density Against Slope
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = slope_use, y = density_sch)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Density (SCH) Against Slope", 
+       x = "Slope", 
+       y = "Density") +
+  theme_minimal()
+
+ggplot(EDA, aes(x = slope_use, y = density_typ)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Density (TYP) Against Slope", 
+       x = "Slope", 
+       y = "Density") +
+  theme_minimal()
+```
+
+### Speed Limit
+
+#### Presence/Absence Against Speed Limit (Bar Plot)
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = factor(speed_limit), fill = factor(presence_absence_sch))) +
+  geom_bar(position = "dodge") +
+  labs(title = "Frequency of Presence/Absence (SCH) by Speed Limit",
+       x = "Speed Limit",
+       y = "Frequency",
+       fill = "Presence/Absence") +
+  theme_minimal()
+
+ggplot(EDA, aes(x = factor(speed_limit), fill = factor(presence_absence_typ))) +
+  geom_bar(position = "dodge") +
+  labs(title = "Frequency of Presence/Absence (TYP) by Speed Limit",
+       x = "Speed Limit",
+       y = "Frequency",
+       fill = "Presence/Absence") +
+  theme_minimal()
+
+
+```
+
+#### Density Against Speed Limit
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = speed_limit, y = density_sch)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Density (SCH) Against Speed Limit", 
+       x = "Speed Limit", 
+       y = "Density") +
+  theme_minimal()
+
+ggplot(EDA, aes(x = speed_limit, y = density_typ)) +
+  geom_point(color = "red", size = 3, alpha = 0.7) +
+  labs(title = "Scatterplot of Density (TYP) Against Speed Limit", 
+       x = "Speed Limit", 
+       y = "Density") +
+  theme_minimal()
 ```
