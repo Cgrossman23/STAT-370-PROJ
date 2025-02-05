@@ -1,0 +1,56 @@
+---
+title: "STAT-370-PROJ-EDA" 
+author: "William Quinn" 
+format: html
+self-contained: true
+editor: visual
+---
+
+# Libraries {.appendix}
+
+```{r}
+library(RCurl)
+```
+
+# Importing {.appendix}
+
+```{r}
+EDA_GIT_LINK <- getURL("https://raw.githubusercontent.com/Will-Quinn-1919/STAT-370-PROJ/refs/heads/patch-1/cleaned_data.csv") 
+EDA <- read.csv(text = EDA_GIT_LINK)
+```
+
+# EDA
+
+## Structure Analysis
+
+```{r}
+#| echo: false 
+str(EDA) 
+unique(EDA$transect) 
+unique(EDA$site_combined) 
+unique(EDA$site_individual) 
+summary(EDA$speed_limit)
+```
+
+-   There are 24 unique transects. What are these?
+
+-   4 unique sites, 8 individual sites
+
+-   Speed limit has little variable, 10-14 mph
+
+## NA Assess
+
+```{r}
+#| echo: false 
+rows_with_na <- EDA[!complete.cases(EDA), ] 
+print(rows_with_na)  
+unique(rows_with_na$site_combined)
+```
+
+-   Only one missing variable (TYP_D) in obs. 289
+
+## Basic Visualizations
+
+```{r}
+#| echo: false 
+```
