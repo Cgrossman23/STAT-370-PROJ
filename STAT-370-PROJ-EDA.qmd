@@ -10,13 +10,24 @@ editor: visual
 
 ```{r}
 library(RCurl)
+library(ggplot2)
+library(janitor)
+library(dplyr)
 ```
 
 # Importing {.appendix}
 
 ```{r}
-EDA_GIT_LINK <- getURL("https://raw.githubusercontent.com/Will-Quinn-1919/STAT-370-PROJ/refs/heads/patch-1/cleaned_data.csv") 
+EDA_GIT_LINK <- getURL("https://raw.githubusercontent.com/Cgrossman23/STAT-370-PROJ/refs/heads/main/cleaned_data.csv") 
 EDA <- read.csv(text = EDA_GIT_LINK)
+
+# going to remove columns 11,12 since they are geographical data so pretty useless right now
+
+EDA <- EDA[,-c(11,12)]
+
+# make all var undercase
+
+EDA <- clean_names(EDA)
 ```
 
 # EDA
@@ -36,7 +47,7 @@ summary(EDA$speed_limit)
 
 -   4 unique sites, 8 individual sites
 
--   Speed limit has little variable, 10-14 mph
+-   Speed limit has little variable, 10 or 14 mph
 
 ## NA Assess
 
@@ -49,8 +60,67 @@ unique(rows_with_na$site_combined)
 
 -   Only one missing variable (TYP_D) in obs. 289
 
-## Basic Visualizations
+## Distribution Visualizations of Explanatory Variables
+
+### Cost (predicted intensity of waves)
+
+```{r}
+ggplot(EDA, aes(x = cost_small)) +
+  geom_histogram(binwidth = 0.5, fill = "steelblue", color = "black") +
+  labs(title = "Distribution of Cost (predicted intensity of waves)", x = "Cost", y = "Frequency") +
+  theme_minimal()
+```
+
+### Water Depth
+
+```{r}
+#| echo: false
+ggplot(EDA, aes(x = water_depth)) +
+  geom_histogram(binwidth = 5, fill = "steelblue", color = "black") +
+  labs(title = "Distribution of Water Depth", x = "Water Depth", y = "Frequency") +
+  theme_minimal()
+```
+
+-   Fairly normal-ish
+
+### Fetch Projected
+
+```{r}
+#| echo: false
+ggplot(EDA, aes(x = fetch_projected)) +
+  geom_histogram(binwidth = 100, fill = "steelblue", color = "black") +
+  labs(title = "Distribution of Fetch Projected", x = "Fetch Projected", y = "Frequency") +
+  theme_minimal()
+```
+
+-   Fairly uniform
+
+### Slope
 
 ```{r}
 #| echo: false 
+EDA$slope_use <- abs(EDA$slope_use)
+
+ggplot(EDA, aes(x = slope_use)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Distribution of Slope", x = "Slope", y = "Frequency") +
+  theme_minimal()
+```
+
+-   Has a similar distribution to the cost variable
+
+### Speed Limit
+
+```{r}
+#| echo: false 
+ggplot(EDA, aes(x = speed_limit)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Distribution of Speed Limit", x = "Speed Limit", y = "Frequency") +
+  theme_minimal()
+```
+
+## Scatter Plots Response Variable Against Explanatory
+
+```{r}
+
 ```
