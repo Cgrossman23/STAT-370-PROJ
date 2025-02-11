@@ -38,12 +38,9 @@ colnames(EDA)[8] <- "density_sch"
 colnames(EDA)[9] <- "presence_absence_typ"
 colnames(EDA)[10] <- "density_typ"
 names(EDA)
-
 ```
 
-# EDA
-
-##  Structure Analysis
+# Structure Analysis
 
 ```{r}
 #| echo: false
@@ -77,22 +74,54 @@ summary(EDA$density_typ)
 rows_with_na <- EDA[!complete.cases(EDA), ] 
 print(rows_with_na)  
 unique(rows_with_na$site_combined)
+EDA <- na.omit(EDA)
 ```
 
 -   Only one missing variable (TYP_D) in obs. 289
 
-## Distribution Visualizations of Explanatory Variables
+## Summarizing Response Variables
 
-### Cost (predicted intensity of waves)
+```{r}
+#| echo: false
+names(EDA)
+EDA$presence_absence <- (EDA$presence_absence_sch + EDA$presence_absence_typ)
+EDA$density <- (EDA$density_sch + EDA$density_typ)
+
+EDA <- EDA %>%
+  mutate(plant_type = case_when(
+    presence_absence_typ == 1 ~ "typ",
+    presence_absence_sch == 1 ~ "sch",
+    TRUE ~ NA_character_
+  ))
+
+summary(EDA$presence_absence_sch)
+summary(EDA$presence_absence_typ)
+summary(EDA$presence_absence)
+
+summary(EDA$density_sch)
+summary(EDA$density_typ)
+summary(EDA$density)
+```
+
+# Distribution of Explanatory Variables
+
+## Cost (predicted intensity of wave)
 
 ```{r}
 ggplot(EDA, aes(x = cost_small)) +
   geom_histogram(binwidth = 0.5, fill = "steelblue", color = "black") +
   labs(title = "Distribution of Cost (predicted intensity of waves)", x = "Cost", y = "Frequency") +
   theme_minimal()
+
+EDA_filter <- EDA %>% filter(exposure == "Exposed")
+
+ggplot(EDA_filter, aes(x = cost_small)) +
+  geom_histogram(binwidth = 0.5, fill = "steelblue", color = "black") +
+  labs(title = "Distribution of Cost Filtered (predicted intensity of waves)", x = "Cost", y = "Frequency") +
+  theme_minimal()
 ```
 
-### Fetch Project
+## Fetch Projected
 
 ```{r}
 #| echo: false
@@ -102,7 +131,7 @@ ggplot(EDA, aes(x = fetch_projected)) +
   theme_minimal()
 ```
 
-### Water Depth
+## Water Depth
 
 ```{r}
 #| echo: false
@@ -114,7 +143,7 @@ ggplot(EDA, aes(x = water_depth)) +
 
 -   Fairly normal-ish
 
-### Slope
+## Slope
 
 ```{r}
 #| echo: false 
@@ -128,7 +157,7 @@ ggplot(EDA, aes(x = slope_use)) +
 
 -   Has a similar distribution to the cost variable
 
-### Speed Limit
+## Speed Limit
 
 ```{r}
 #| echo: false 
@@ -138,15 +167,21 @@ ggplot(EDA, aes(x = speed_limit)) +
   theme_minimal()
 ```
 
-## Scatter Plots Response Variable Against Explanatory
+# Exposure type
 
-### Cost
+## Cost
 
-#### Presence/Absence Against Cost
+### Presence/Absence Against Cost
 
 ```{r}
 #| echo: false
 
+<<<<<<< HEAD
+ggplot(EDA, aes(x = cost_small, y = presence_absence, col = exposure)) +
+  geom_point(size = 3, alpha = 0.7) +
+  facet_wrap(vars(exposure)) +
+  labs(title = "Presence/Absence Against Cost Grouped By Exposure", 
+=======
 ggplot(EDA, aes(x = cost_small, y = presence_absence_sch, col = exposure)) +
   geom_point(size = 3, alpha = 0.7) +
   facet_wrap(vars(exposure)) +
@@ -159,16 +194,23 @@ ggplot(EDA, aes(x = cost_small, y = presence_absence_typ, col = exposure)) +
   geom_point(size = 3, alpha = 0.7) +
   facet_wrap(vars(exposure)) +
   labs(title = "Presence/Absence (TYP) Against Cost Grouped By Exposure", 
+>>>>>>> f8b16e427dffa7f25ff9f439c0af3037718d2394
        x = "Cost", 
        y = "Presence/Absence") +
   theme_minimal()
 ```
 
-#### Density Against Cost
+### Density Against Cost
 
 ```{r}
 #| echo: false 
 
+<<<<<<< HEAD
+ggplot(EDA, aes(x = cost_small, y = density, col = exposure)) +
+  geom_point(size = 3, alpha = 0.7) +
+  facet_wrap(vars(exposure)) +
+  labs(title = "Density Against Cost Grouped By Exposure",
+=======
 ggplot(EDA, aes(x = cost_small, y = density_sch, col = exposure)) +
   geom_point(size = 3, alpha = 0.7) +
   facet_wrap(vars(exposure)) +
@@ -181,18 +223,24 @@ ggplot(EDA, aes(x = cost_small, y = density_typ, col = exposure)) +
   geom_point(size = 3, alpha = 0.7) +
   facet_wrap(vars(exposure)) +
   labs(title = "Density (TYP) Against Cost Grouped By Exposure",
+>>>>>>> f8b16e427dffa7f25ff9f439c0af3037718d2394
        x = "Cost", 
        y = "Density") +
   theme_minimal()
 ```
 
-### Fetch Project
+## Fetch Project
 
-#### Presence/Absence Against Fetch
+### Presence/Absence Against Fetch
 
 ```{r}
 #| echo: false 
 
+<<<<<<< HEAD
+ggplot(EDA, aes(x = fetch_projected, y = presence_absence, col = exposure)) + facet_wrap(vars(exposure)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Presence/Absence Against Fetch Grouped By Exposure", 
+=======
 ggplot(EDA, aes(x = fetch_projected, y = presence_absence_sch, col = exposure)) + facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
   labs(title = "Presence/Absence (SCH) Against Fetch Grouped By Exposure", 
@@ -203,16 +251,23 @@ ggplot(EDA, aes(x = fetch_projected, y = presence_absence_sch, col = exposure)) 
 ggplot(EDA, aes(x = fetch_projected, y = presence_absence_typ, col = exposure)) + facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
   labs(title = "Presence/Absence (TYP) Against Fetch Grouped By Exposure", 
+>>>>>>> f8b16e427dffa7f25ff9f439c0af3037718d2394
        x = "Fetch", 
        y = "Presence/Absence") +
   theme_minimal()
 ```
 
-#### Density Against Fetch
+### Density Against Fetch
 
 ```{r}
 #| echo: false 
 
+<<<<<<< HEAD
+ggplot(EDA, aes(x = fetch_projected, y = density, col = exposure)) +
+  facet_wrap(vars(exposure)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Density Against Fetch Grouped By Exposure", 
+=======
 ggplot(EDA, aes(x = fetch_projected, y = density_sch, col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
@@ -225,16 +280,25 @@ ggplot(EDA, aes(x = fetch_projected, y = density_typ, col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
   labs(title = "Density (TYP) Against Fetch Grouped By Exposure", 
+>>>>>>> f8b16e427dffa7f25ff9f439c0af3037718d2394
        x = "Fetch", 
        y = "Density") +
   theme_minimal()
 ```
 
-### Water Depth
+## Water Depth
 
-#### Presence/Absence Against Water Depth
+### Presence/Absence Against Water Depth
 
 ```{r}
+<<<<<<< HEAD
+#| echo: false
+
+ggplot(EDA, aes(x = water_depth, y = presence_absence, col = exposure)) +
+  facet_wrap(vars(exposure)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Presence/Absence Against Water Depth Grouped By Exposure", 
+=======
 ggplot(EDA, aes(x = water_depth, y = presence_absence_sch, col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
@@ -247,16 +311,23 @@ ggplot(EDA, aes(x = water_depth, y = presence_absence_typ, col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
   labs(title = "Presence/Absence (TYP) Against Water Depth Grouped By Exposure", 
+>>>>>>> f8b16e427dffa7f25ff9f439c0af3037718d2394
        x = "Water Depth", 
        y = "Presence/Absence") +
   theme_minimal()
 ```
 
-#### Density Against Water Depth
+### Density Against Water Depth
 
 ```{r}
 #| echo: false 
 
+<<<<<<< HEAD
+ggplot(EDA, aes(x = water_depth, y = density, col = exposure)) +
+  facet_wrap(vars(exposure)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Density Against Water Depth Grouped By Exposure", 
+=======
 ggplot(EDA, aes(x = water_depth, y = density_sch, col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
@@ -269,18 +340,25 @@ ggplot(EDA, aes(x = water_depth, y = density_typ, col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
   labs(title = "Density (TYP) Against Water Depth Grouped By Exposure", 
+>>>>>>> f8b16e427dffa7f25ff9f439c0af3037718d2394
        x = "Water Depth", 
        y = "Density") +
   theme_minimal()
 ```
 
-### Slope
+## Slope
 
-#### Presence/Absence Against Slope
+### Presence/Absence Against Slope
 
 ```{r}
 #| echo: false 
 
+<<<<<<< HEAD
+ggplot(EDA, aes(x = slope_use, y = presence_absence, col = exposure)) +
+  facet_wrap(vars(exposure)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Presence/Absence Against Slope Grouped By Exposure", 
+=======
 ggplot(EDA, aes(x = slope_use, y = presence_absence_sch, col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
@@ -293,16 +371,23 @@ ggplot(EDA, aes(x = slope_use, y = presence_absence_typ, col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
   labs(title = "Presence/Absence (TYP) Against Slope Grouped By Exposure", 
+>>>>>>> f8b16e427dffa7f25ff9f439c0af3037718d2394
        x = "Slope", 
        y = "Presence/Absence") +
   theme_minimal()
 ```
 
-#### Density Against Slope
+### Density Against Slope
 
 ```{r}
 #| echo: false 
 
+<<<<<<< HEAD
+ggplot(EDA, aes(x = slope_use, y = density, col = exposure)) +
+  facet_wrap(vars(exposure)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Density Against Slope Grouped By Exposure", 
+=======
 ggplot(EDA, aes(x = slope_use, y = density_sch, col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
@@ -315,26 +400,36 @@ ggplot(EDA, aes(x = slope_use, y = density_typ, col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
   labs(title = "Density (TYP) Against Slope Grouped By Exposure", 
+>>>>>>> f8b16e427dffa7f25ff9f439c0af3037718d2394
        x = "Slope", 
        y = "Density") +
   theme_minimal()
 ```
 
-### Speed Limit
+## Speed Limit
 
-#### Presence/Absence Against Speed Limit (Bar Plot)
+### Presence/Absence Against Speed Limit (Bar Plot)
 
 ```{r}
 #| echo: false 
 
+<<<<<<< HEAD
+ggplot(EDA, aes(x = factor(speed_limit), fill = factor(presence_absence), col = exposure)) +
+  facet_wrap(vars(exposure)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Presence/Absence by Speed Limit Grouped By Exposure",
+=======
 ggplot(EDA, aes(x = factor(speed_limit), fill = factor(presence_absence_sch), col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_bar(position = "dodge") +
   labs(title = "Presence/Absence (SCH) by Speed Limit Grouped By Exposure",
+>>>>>>> f8b16e427dffa7f25ff9f439c0af3037718d2394
        x = "Speed Limit",
        y = "Frequency",
        fill = "Presence/Absence") +
   theme_minimal()
+<<<<<<< HEAD
+=======
 
 ggplot(EDA, aes(x = factor(speed_limit), fill = factor(presence_absence_typ), col = exposure)) +
   facet_wrap(vars(exposure)) +
@@ -346,13 +441,20 @@ ggplot(EDA, aes(x = factor(speed_limit), fill = factor(presence_absence_typ), co
   theme_minimal()
 
 
+>>>>>>> f8b16e427dffa7f25ff9f439c0af3037718d2394
 ```
 
-#### Density Against Speed Limit
+### Density Against Speed Limit
 
 ```{r}
 #| echo: false 
 
+<<<<<<< HEAD
+ggplot(EDA, aes(x = speed_limit, y = density, col = exposure)) +
+  facet_wrap(vars(exposure)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Density Against Speed Limit Grouped By Exposure", 
+=======
 ggplot(EDA, aes(x = speed_limit, y = density_sch, col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
@@ -365,7 +467,232 @@ ggplot(EDA, aes(x = speed_limit, y = density_typ, col = exposure)) +
   facet_wrap(vars(exposure)) +
   geom_point(size = 3, alpha = 0.7) +
   labs(title = "Density (TYP) Against Speed Limit Grouped By Exposure", 
+>>>>>>> f8b16e427dffa7f25ff9f439c0af3037718d2394
        x = "Speed Limit", 
+       y = "Density") +
+  theme_minimal()
+```
+
+# Site Type
+
+## Cost
+
+### Presence/Absence Against Cost
+
+```{r}
+#| echo: false
+
+ggplot(EDA, aes(x = cost_small, y = presence_absence, col = site_combined)) +
+  geom_point(size = 3, alpha = 0.7) +
+  facet_wrap(vars(site_combined)) +
+  labs(title = "Presence/Absence Against Cost Grouped By Site", 
+       x = "Cost", 
+       y = "Presence/Absence") +
+  theme_minimal()
+```
+
+### Density Against Cost
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = cost_small, y = density, col = site_combined)) +
+  geom_point(size = 3, alpha = 0.7) +
+  facet_wrap(vars(site_combined)) +
+  labs(title = "Density Against Cost Grouped By Site",
+       x = "Cost", 
+       y = "Density") +
+  theme_minimal()
+
+ggplot(EDA, aes(x = cost_small, y = density, col = site_combined)) +
+  geom_point(size = 3, alpha = 0.7) +
+  facet_wrap(vars(exposure)) +
+  labs(title = "Density Against Cost Grouped By Site",
+       x = "Cost", 
+       y = "Density") +
+  theme_minimal()
+```
+
+## Fetch Project
+
+### Presence/Absence Against Fetch
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = fetch_projected, y = presence_absence, col = site_combined)) + facet_wrap(vars(site_combined)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Presence/Absence Against Fetch Grouped By Site", 
+       x = "Fetch", 
+       y = "Presence/Absence") +
+  theme_minimal()
+```
+
+### Density Against Fetch
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = fetch_projected, y = density, col = site_combined)) +
+  facet_wrap(vars(site_combined)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Density Against Fetch Grouped By Site", 
+       x = "Fetch", 
+       y = "Density") +
+  theme_minimal()
+```
+
+## Water Depth
+
+### Presence/Absence Against Water Depth
+
+```{r}
+#| echo: false
+
+ggplot(EDA, aes(x = water_depth, y = presence_absence, col = site_combined)) +
+  facet_wrap(vars(site_combined)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Presence/Absence Against Water Depth Grouped By Site", 
+       x = "Water Depth", 
+       y = "Presence/Absence") +
+  theme_minimal()
+```
+
+### Density Against Water Depth
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = water_depth, y = density, col = site_combined)) +
+  facet_wrap(vars(site_combined)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Density Against Water Depth Grouped By Site", 
+       x = "Water Depth", 
+       y = "Density") +
+  theme_minimal()
+```
+
+## Slope
+
+### Presence/Absence Against Slope
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = slope_use, y = presence_absence, col = site_combined)) +
+  facet_wrap(vars(site_combined)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Presence/Absence Against Slope Grouped By Site", 
+       x = "Slope", 
+       y = "Presence/Absence") +
+  theme_minimal()
+```
+
+### Density Against Slope
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = slope_use, y = density, col = site_combined)) +
+  facet_wrap(vars(site_combined)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Density Against Slope Grouped By Site", 
+       x = "Slope", 
+       y = "Density") +
+  theme_minimal()
+```
+
+## Speed Limit
+
+### Presence/Absence Against Speed Limit (Bar Plot)
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = factor(speed_limit), fill = factor(presence_absence), col = site_combined)) +
+  facet_wrap(vars(site_combined)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Presence/Absence by Speed Limit Grouped By Site",
+       x = "Speed Limit",
+       y = "Frequency",
+       fill = "Presence/Absence") +
+  theme_minimal()
+```
+
+### Density Against Speed Limit
+
+```{r}
+#| echo: false 
+
+ggplot(EDA, aes(x = speed_limit, y = density, col = site_combined)) +
+  facet_wrap(vars(site_combined)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Density Against Speed Limit Grouped By Site", 
+       x = "Speed Limit", 
+       y = "Density") +
+  theme_minimal()
+```
+
+# Plant type
+
+## Cost
+
+### Density Against Cost
+
+```{r}
+#| echo: false 
+
+EDA_filtered2 <- na.omit(EDA)
+
+ggplot(EDA_filtered2, aes(x = cost_small, y = density, col = plant_type)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Density Against Cost Grouped By Plant Type",
+       x = "Cost", 
+       y = "Density") +
+  theme_minimal()
+```
+
+## Fetch Project
+
+### Density Against Fetch
+
+```{r}
+#| echo: false 
+
+ggplot(EDA_filtered2, aes(x = fetch_projected, y = density, col = plant_type)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Density Against Fetch Grouped By Plant Type", 
+       x = "Fetch", 
+       y = "Density") +
+  theme_minimal()
+```
+
+## Water Depth
+
+### Density Against Water Depth
+
+```{r}
+#| echo: false 
+
+ggplot(EDA_filtered2, aes(x = water_depth, y = density, col = plant_type)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Density Against Water Depth Grouped By Plant Type", 
+       x = "Water Depth", 
+       y = "Density") +
+  theme_minimal()
+```
+
+## Slope
+
+### Density Against Slope
+
+```{r}
+#| echo: false 
+
+ggplot(EDA_filtered2, aes(x = slope_use, y = density, col = plant_type)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Density Against Slope Grouped By Plant Type", 
+       x = "Slope", 
        y = "Density") +
   theme_minimal()
 ```
