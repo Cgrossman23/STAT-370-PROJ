@@ -108,16 +108,10 @@ summary(EDA$density)
 ## Cost (predicted intensity of wave)
 
 ```{r}
-ggplot(EDA, aes(x = cost_small)) +
-  geom_histogram(binwidth = 0.5, fill = "steelblue", color = "black") +
-  labs(title = "Distribution of Cost (predicted intensity of waves)", x = "Cost", y = "Frequency") +
-  theme_minimal()
-
-EDA_filter <- EDA %>% filter(exposure == "Exposed")
-
-ggplot(EDA_filter, aes(x = cost_small)) +
-  geom_histogram(binwidth = 0.5, fill = "steelblue", color = "black") +
-  labs(title = "Distribution of Cost Filtered (predicted intensity of waves)", x = "Cost", y = "Frequency") +
+ggplot(EDA, aes(x = cost_small, fill = exposure)) +
+  geom_histogram(binwidth = 1, color = "black", alpha = 0.7, position = "dodge") +
+  labs(title = "Distribution of Cost (predicted intensity of waves)", 
+       x = "Cost", y = "Frequency") +
   theme_minimal()
 ```
 
@@ -125,8 +119,8 @@ ggplot(EDA_filter, aes(x = cost_small)) +
 
 ```{r}
 #| echo: false
-ggplot(EDA, aes(x = fetch_projected)) +
-  geom_histogram(binwidth = 100, fill = "steelblue", color = "black") +
+ggplot(EDA, aes(x = fetch_projected, fill = exposure)) +
+  geom_histogram(binwidth = 100, color = "black", alpha = 0.7, position = "Identity") +
   labs(title = "Distribution of Fetch Projected", x = "Fetch Projected", y = "Frequency") +
   theme_minimal()
 ```
@@ -135,8 +129,8 @@ ggplot(EDA, aes(x = fetch_projected)) +
 
 ```{r}
 #| echo: false
-ggplot(EDA, aes(x = water_depth)) +
-  geom_histogram(binwidth = 5, fill = "steelblue", color = "black") +
+ggplot(EDA, aes(x = water_depth, fill = exposure)) +
+  geom_histogram(binwidth = 5, color = "black", alpha = 0.7, position = "Dodge") +
   labs(title = "Distribution of Water Depth", x = "Water Depth", y = "Frequency") +
   theme_minimal()
 ```
@@ -149,8 +143,8 @@ ggplot(EDA, aes(x = water_depth)) +
 #| echo: false 
 EDA$slope_use <- abs(EDA$slope_use)
 
-ggplot(EDA, aes(x = slope_use)) +
-  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+ggplot(EDA, aes(x = slope_use, fill = exposure)) +
+  geom_histogram(binwidth = 1, color = "black", alpha = 0.7, position = "Identity") +
   labs(title = "Distribution of Slope", x = "Slope", y = "Frequency") +
   theme_minimal()
 ```
