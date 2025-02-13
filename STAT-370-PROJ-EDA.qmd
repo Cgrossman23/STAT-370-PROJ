@@ -536,7 +536,45 @@ ggplot(EDA_filtered2, aes(x = slope_use, y = density, col = plant_type)) +
   theme_minimal()
 ```
 
-# Individual Sites
+# Leaflet Visualizations
+
+## Exposure
+
+```{r}
+library(leaflet)
+
+EDA$longitude <- ifelse(EDA$longitude > 0, -EDA$longitude, EDA$longitude)
+
+leaflet(data = EDA) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    ~longitude, ~latitude,  # 正しい列名を指定
+    color = ~ifelse(exposure == "Exposed", "red", "blue"),
+    popup = ~paste("Plot:", plot, "<br>Water Depth:", water_depth)
+  )
+
+```
+
+## Plant type
+
+```{r}
+EDA$longitude <- ifelse(EDA$longitude > 0, -EDA$longitude, EDA$longitude)
+
+leaflet(data = EDA) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    ~longitude, ~latitude,
+    color = ~case_when(
+      plant_type == "sch" ~ "red",  
+      plant_type == "typ" ~ "blue",  
+      is.na(plant_type) ~ "gray",
+      TRUE ~ "gray" 
+    ),
+    popup = ~paste("Plot:", plot, "<br>Water Depth:", water_depth)
+  )
+```
+
+# Stadia Visualizations
 
 ## Site A
 
@@ -556,13 +594,13 @@ head(EDA_a$longitude)
 basemap <- get_stadiamap(bbox, zoom = 15, maptype = "stamen_terrain_background")
 
 ggmap(basemap) +
-  geom_point(data = EDA_a, aes(x = longitude, y = latitude, color = exposure), size = 2) +
+  geom_point(data = EDA_a, aes(x = longitude, y = latitude, color = exposure), size = 1) +
   scale_color_manual(values = c("Exposed" = "red", "Unexposed" = "blue")) +
   theme_minimal() +
   ggtitle("Site A: Exposure groups")
 
 ggmap(basemap) +
-  geom_point(data = EDA_a, aes(x = longitude, y = latitude, color = plant_type), size = 2) +
+  geom_point(data = EDA_a, aes(x = longitude, y = latitude, color = plant_type), size = 1) +
   scale_color_manual(values = c("sch" = "red", "typ" = "blue")) +
   theme_minimal() +
   ggtitle("Site A: Plant Type")
@@ -588,13 +626,13 @@ head(EDA_b$longitude)
 basemap <- get_stadiamap(bbox, zoom = 15, maptype = "stamen_terrain_background")
 
 ggmap(basemap) +
-  geom_point(data = EDA_b, aes(x = longitude, y = latitude, color = exposure), size = 2) +
+  geom_point(data = EDA_b, aes(x = longitude, y = latitude, color = exposure), size = 1) +
   scale_color_manual(values = c("Exposed" = "red", "Unexposed" = "blue")) +
   theme_minimal() +
   ggtitle("Site B: Exposure groups")
 
 ggmap(basemap) +
-  geom_point(data = EDA_b, aes(x = longitude, y = latitude, color = plant_type), size = 2) +
+  geom_point(data = EDA_b, aes(x = longitude, y = latitude, color = plant_type), size = 1) +
   scale_color_manual(values = c("sch" = "red", "typ" = "blue")) +
   theme_minimal() +
   ggtitle("Site B: Plant Type")
