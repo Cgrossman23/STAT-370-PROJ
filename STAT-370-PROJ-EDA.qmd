@@ -14,6 +14,8 @@ library(ggplot2)
 library(janitor)
 library(dplyr)
 library(ggsci)
+library(sf)
+library(ggmap)
 theme_set(theme_classic())
 ```
 
@@ -22,10 +24,6 @@ theme_set(theme_classic())
 ```{r}
 EDA_GIT_LINK <- getURL("https://raw.githubusercontent.com/Cgrossman23/STAT-370-PROJ/refs/heads/main/cleaned_data.csv") 
 EDA <- read.csv(text = EDA_GIT_LINK)
-
-# going to remove columns 11,12 since they are geographical data so pretty useless right now
-
-EDA <- EDA[,-c(11,12)]
 
 # make all var undercase
 
@@ -108,7 +106,7 @@ summary(EDA$density)
 ## Cost (predicted intensity of wave)
 
 ```{r}
-ggplot(EDA, aes(x = cost_small, fill = exposure)) +
+ggplot(EDA_filtered2, aes(x = cost_small, fill = plant_type)) +
   geom_histogram(binwidth = 1, color = "black", alpha = 0.7, position = "dodge") +
   labs(title = "Distribution of Cost (predicted intensity of waves)", 
        x = "Cost", y = "Frequency") +
@@ -536,4 +534,130 @@ ggplot(EDA_filtered2, aes(x = slope_use, y = density, col = plant_type)) +
        x = "Slope", 
        y = "Density") +
   theme_minimal()
+```
+
+# Individual Sites
+
+## Site A
+
+```{r}
+EDA_a <- EDA %>% filter(site_combined == "A")
+
+EDA_a$longitude <- ifelse(EDA_a$longitude > 0, -EDA_a$longitude, EDA_a$longitude)
+
+bbox <- c(left = min(EDA_a$longitude - 0.002), 
+          bottom = min(EDA_a$latitude - 0.002), 
+          right = max(EDA_a$longitude + 0.002), 
+          top = max(EDA_a$latitude + 0.002))
+
+register_stadiamaps(key = "a320166b-aa03-461a-bcd1-e7bad8210a0c")
+head(EDA_a$longitude)
+
+basemap <- get_stadiamap(bbox, zoom = 15, maptype = "stamen_terrain_background")
+
+ggmap(basemap) +
+  geom_point(data = EDA_a, aes(x = longitude, y = latitude, color = exposure), size = 2) +
+  scale_color_manual(values = c("Exposed" = "red", "Unexposed" = "blue")) +
+  theme_minimal() +
+  ggtitle("Site A: Exposure groups")
+
+ggmap(basemap) +
+  geom_point(data = EDA_a, aes(x = longitude, y = latitude, color = plant_type), size = 2) +
+  scale_color_manual(values = c("sch" = "red", "typ" = "blue")) +
+  theme_minimal() +
+  ggtitle("Site A: Plant Type")
+
+
+```
+
+## Site B
+
+```{r}
+EDA_b <- EDA %>% filter(site_combined == "B")
+
+EDA_b$longitude <- ifelse(EDA_b$longitude > 0, -EDA_b$longitude, EDA_b$longitude)
+
+bbox <- c(left = min(EDA_b$longitude - 0.002), 
+          bottom = min(EDA_b$latitude - 0.002), 
+          right = max(EDA_b$longitude + 0.002), 
+          top = max(EDA_b$latitude + 0.002))
+
+register_stadiamaps(key = "a320166b-aa03-461a-bcd1-e7bad8210a0c")
+head(EDA_b$longitude)
+
+basemap <- get_stadiamap(bbox, zoom = 15, maptype = "stamen_terrain_background")
+
+ggmap(basemap) +
+  geom_point(data = EDA_b, aes(x = longitude, y = latitude, color = exposure), size = 2) +
+  scale_color_manual(values = c("Exposed" = "red", "Unexposed" = "blue")) +
+  theme_minimal() +
+  ggtitle("Site B: Exposure groups")
+
+ggmap(basemap) +
+  geom_point(data = EDA_b, aes(x = longitude, y = latitude, color = plant_type), size = 2) +
+  scale_color_manual(values = c("sch" = "red", "typ" = "blue")) +
+  theme_minimal() +
+  ggtitle("Site B: Plant Type")
+
+```
+
+## Site C
+
+```{r}
+EDA_c <- EDA %>% filter(site_combined == "C")
+
+EDA_c$longitude <- ifelse(EDA_c$longitude > 0, -EDA_c$longitude, EDA_c$longitude)
+
+bbox <- c(left = min(EDA_c$longitude - 0.002), 
+          bottom = min(EDA_c$latitude - 0.002), 
+          right = max(EDA_c$longitude + 0.002), 
+          top = max(EDA_c$latitude + 0.002))
+
+register_stadiamaps(key = "a320166b-aa03-461a-bcd1-e7bad8210a0c")
+head(EDA_c$longitude)
+
+basemap <- get_stadiamap(bbox, zoom = 15, maptype = "stamen_terrain_background")
+
+ggmap(basemap) +
+  geom_point(data = EDA_c, aes(x = longitude, y = latitude, color = exposure), size = 1) +
+  scale_color_manual(values = c("Exposed" = "red", "Unexposed" = "blue")) +
+  theme_minimal() +
+  ggtitle("Site C: Exposure groups")
+
+ggmap(basemap) +
+  geom_point(data = EDA_c, aes(x = longitude, y = latitude, color = plant_type), size = 1) +
+  scale_color_manual(values = c("sch" = "red", "typ" = "blue")) +
+  theme_minimal() +
+  ggtitle("Site C: Plant Type")
+
+```
+
+## Site D
+
+```{r}
+EDA_d <- EDA %>% filter(site_combined == "D")
+
+EDA_d$longitude <- ifelse(EDA_d$longitude > 0, -EDA_d$longitude, EDA_d$longitude)
+
+bbox <- c(left = min(EDA_d$longitude - 0.002), 
+          bottom = min(EDA_d$latitude - 0.002), 
+          right = max(EDA_d$longitude + 0.002), 
+          top = max(EDA_d$latitude + 0.002))
+
+register_stadiamaps(key = "a320166b-aa03-461a-bcd1-e7bad8210a0c")
+head(EDA_d$longitude)
+
+basemap <- get_stadiamap(bbox, zoom = 15, maptype = "stamen_terrain_background")
+
+ggmap(basemap) +
+  geom_point(data = EDA_d, aes(x = longitude, y = latitude, color = exposure), size = 1) +
+  scale_color_manual(values = c("Exposed" = "red", "Unexposed" = "blue")) +
+  theme_minimal() +
+  ggtitle("Site D: Exposure groups")
+
+ggmap(basemap) +
+  geom_point(data = EDA_d, aes(x = longitude, y = latitude, color = plant_type), size = 1) +
+  scale_color_manual(values = c("sch" = "red", "typ" = "blue")) +
+  theme_minimal() +
+  ggtitle("Site D: Plant Type")
 ```
