@@ -511,7 +511,7 @@ ggplot(EDA_filtered2, aes(x = fetch_projected, y = density, col = plant_type)) +
 ### Density Against Water Depth
 
 ```{r}
-#| echo: false 
+#| echo: false
 
 ggplot(EDA_filtered2, aes(x = water_depth, y = density, col = plant_type)) +
   geom_point(size = 3, alpha = 0.7) +
