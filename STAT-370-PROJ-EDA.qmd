@@ -106,7 +106,7 @@ summary(EDA$density)
 ## Cost (predicted intensity of wave)
 
 ```{r}
-ggplot(EDA_filtered2, aes(x = cost_small, fill = plant_type)) +
+ggplot(EDA, aes(x = cost_small, fill = plant_type)) +
   geom_histogram(binwidth = 1, color = "black", alpha = 0.7, position = "dodge") +
   labs(title = "Distribution of Cost (predicted intensity of waves)", 
        x = "Cost", y = "Frequency") +
@@ -536,11 +536,54 @@ ggplot(EDA_filtered2, aes(x = slope_use, y = density, col = plant_type)) +
   theme_minimal()
 ```
 
-# Individual Sites
+# Leaflet Visualizations
+
+## Exposure
+
+```{r}
+#| eval: false
+
+library(leaflet)
+
+EDA$longitude <- ifelse(EDA$longitude > 0, -EDA$longitude, EDA$longitude)
+
+leaflet(data = EDA) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    ~longitude, ~latitude,  # 正しい列名を指定
+    color = ~ifelse(exposure == "Exposed", "red", "blue"),
+    popup = ~paste("Plot:", plot, "<br>Water Depth:", water_depth)
+  )
+
+```
+
+## Plant type
+
+```{r}
+#| eval: false
+
+EDA$longitude <- ifelse(EDA$longitude > 0, -EDA$longitude, EDA$longitude)
+
+leaflet(data = EDA) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    ~longitude, ~latitude,
+    color = ~case_when(
+      plant_type == "sch" ~ "red",  
+      plant_type == "typ" ~ "blue",  
+      is.na(plant_type) ~ "gray",
+      TRUE ~ "gray" 
+    ),
+    popup = ~paste("Plot:", plot, "<br>Water Depth:", water_depth)
+  )
+```
+
+# Stadia Visualizations
 
 ## Site A
 
 ```{r}
+#| eval: false
 EDA_a <- EDA %>% filter(site_combined == "A")
 
 EDA_a$longitude <- ifelse(EDA_a$longitude > 0, -EDA_a$longitude, EDA_a$longitude)
@@ -556,13 +599,13 @@ head(EDA_a$longitude)
 basemap <- get_stadiamap(bbox, zoom = 15, maptype = "stamen_terrain_background")
 
 ggmap(basemap) +
-  geom_point(data = EDA_a, aes(x = longitude, y = latitude, color = exposure), size = 2) +
+  geom_point(data = EDA_a, aes(x = longitude, y = latitude, color = exposure), size = 1) +
   scale_color_manual(values = c("Exposed" = "red", "Unexposed" = "blue")) +
   theme_minimal() +
   ggtitle("Site A: Exposure groups")
 
 ggmap(basemap) +
-  geom_point(data = EDA_a, aes(x = longitude, y = latitude, color = plant_type), size = 2) +
+  geom_point(data = EDA_a, aes(x = longitude, y = latitude, color = plant_type), size = 1) +
   scale_color_manual(values = c("sch" = "red", "typ" = "blue")) +
   theme_minimal() +
   ggtitle("Site A: Plant Type")
@@ -573,6 +616,7 @@ ggmap(basemap) +
 ## Site B
 
 ```{r}
+#| eval: false
 EDA_b <- EDA %>% filter(site_combined == "B")
 
 EDA_b$longitude <- ifelse(EDA_b$longitude > 0, -EDA_b$longitude, EDA_b$longitude)
@@ -588,13 +632,13 @@ head(EDA_b$longitude)
 basemap <- get_stadiamap(bbox, zoom = 15, maptype = "stamen_terrain_background")
 
 ggmap(basemap) +
-  geom_point(data = EDA_b, aes(x = longitude, y = latitude, color = exposure), size = 2) +
+  geom_point(data = EDA_b, aes(x = longitude, y = latitude, color = exposure), size = 1) +
   scale_color_manual(values = c("Exposed" = "red", "Unexposed" = "blue")) +
   theme_minimal() +
   ggtitle("Site B: Exposure groups")
 
 ggmap(basemap) +
-  geom_point(data = EDA_b, aes(x = longitude, y = latitude, color = plant_type), size = 2) +
+  geom_point(data = EDA_b, aes(x = longitude, y = latitude, color = plant_type), size = 1) +
   scale_color_manual(values = c("sch" = "red", "typ" = "blue")) +
   theme_minimal() +
   ggtitle("Site B: Plant Type")
@@ -604,6 +648,8 @@ ggmap(basemap) +
 ## Site C
 
 ```{r}
+#| eval: false
+
 EDA_c <- EDA %>% filter(site_combined == "C")
 
 EDA_c$longitude <- ifelse(EDA_c$longitude > 0, -EDA_c$longitude, EDA_c$longitude)
@@ -635,6 +681,8 @@ ggmap(basemap) +
 ## Site D
 
 ```{r}
+#| eval: false
+
 EDA_d <- EDA %>% filter(site_combined == "D")
 
 EDA_d$longitude <- ifelse(EDA_d$longitude > 0, -EDA_d$longitude, EDA_d$longitude)
