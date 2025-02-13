@@ -479,8 +479,6 @@ ggplot(EDA, aes(x = speed_limit, y = density, col = site_combined)) +
 ### Density Against Cost
 
 ```{r}
-#| echo: false 
-
 EDA_filtered2 <- na.omit(EDA)
 
 ggplot(EDA_filtered2, aes(x = cost_small, y = density, col = plant_type)) +
@@ -496,8 +494,6 @@ ggplot(EDA_filtered2, aes(x = cost_small, y = density, col = plant_type)) +
 ### Density Against Fetch
 
 ```{r}
-#| echo: false 
-
 ggplot(EDA_filtered2, aes(x = fetch_projected, y = density, col = plant_type)) +
   geom_point(size = 3, alpha = 0.7) +
   labs(title = "Density Against Fetch Grouped By Plant Type", 
@@ -511,8 +507,6 @@ ggplot(EDA_filtered2, aes(x = fetch_projected, y = density, col = plant_type)) +
 ### Density Against Water Depth
 
 ```{r}
-#| echo: false
-
 ggplot(EDA_filtered2, aes(x = water_depth, y = density, col = plant_type)) +
   geom_point(size = 3, alpha = 0.7) +
   labs(title = "Density Against Water Depth Grouped By Plant Type", 
@@ -562,8 +556,6 @@ leaflet(data = EDA) %>%
 ```{r}
 #| eval: false
 
-EDA$longitude <- ifelse(EDA$longitude > 0, -EDA$longitude, EDA$longitude)
-
 leaflet(data = EDA) %>%
   addTiles() %>%
   addCircleMarkers(
@@ -576,6 +568,30 @@ leaflet(data = EDA) %>%
     ),
     popup = ~paste("Plot:", plot, "<br>Water Depth:", water_depth)
   )
+```
+
+## Cost
+
+```{r}
+cost_palette <- colorNumeric(
+  palette = "YlOrRd",
+  domain = EDA$cost_small
+)
+
+leaflet(data = EDA) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    ~longitude, ~latitude,
+    color = ~cost_palette(cost_small),
+    fillColor = ~cost_palette(cost_small),
+    fillOpacity = 0.8,
+    radius = 3,
+    popup = ~paste("Plot:", plot, "<br>Water Depth:", water_depth, "<br>Cost:", cost_small)
+  ) %>%
+  addLegend("bottomright", 
+            pal = cost_palette, values = EDA$cost_small,
+            title = "Cost Gradient", opacity = 1)
+
 ```
 
 # Stadia Visualizations
