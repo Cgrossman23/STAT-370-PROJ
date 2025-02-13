@@ -1,0 +1,118 @@
+---
+title: "STAT-370-PROJ-MODELING"
+author: "William Quinn"
+format: html
+editor: visual
+---
+
+# Libraries {.appendix}
+
+```{r}
+library(RCurl)
+library(janitor)
+library(dplyr)
+library(lme4)
+library(HLMdiag)
+
+install.packages("devtools")
+devtools::install_github("dustinfife/flexplot")
+
+library(flexplot)
+```
+
+# Importing {.appendix}
+
+```{r}
+data_link <- getURL("https://raw.githubusercontent.com/Cgrossman23/STAT-370-PROJ/refs/heads/main/cleaned_data.csv") 
+wave <- read.csv(text = EDA_GIT_LINK)
+
+# make all var undercase
+
+wave <- clean_names(wave)
+
+# renaming response variables to better names
+
+colnames(wave)[7] <- "presence_absence_sch"
+colnames(wave)[8] <- "density_sch"
+colnames(wave)[9] <- "presence_absence_typ"
+colnames(wave)[10] <- "density_typ"
+names(wave)
+```
+
+# Structure Reference
+
+```{r}
+#| echo: false
+names(wave)
+
+wave[, c(1,2,7:15)] <- lapply(wave[, c(1,2,7:15)], function(x) gsub("[^0-9.]", "", x))
+wave[, c(1,2,7:15)] <- lapply(wave[, c(1,2,7:15)], as.numeric)
+
+str(wave)
+
+unique(wave$transect) 
+unique(wave$site_combined) 
+unique(wave$site_individual)
+unique(wave$exposure)
+```
+
+## NA Assess
+
+```{r}
+#| echo: false 
+rows_with_na <- wave[!complete.cases(wave), ] 
+print(rows_with_na)  
+unique(rows_with_na$site_combined)
+wave <- na.omit(wave)
+```
+
+## Summarizing Response Variables
+
+```{r}
+#| echo: false 
+
+wave$presence_absence <- (wave$presence_absence_sch + wave$presence_absence_typ)
+wave$density <- (wave$density_sch + wave$density_typ)
+
+wave <- wave %>% mutate(plant_type = case_when( 
+                presence_absence_typ ==  1 ~ "typ", 
+                presence_absence_sch == 1 ~ "sch", 
+                TRUE ~ NA_character_ ))
+```
+
+## Filter for Unexposed
+
+```{r}
+wave2 <- wave %>% filter(exposure == "Unexposed")
+```
+
+# Models
+
+## Baseline
+
+```{r}
+
+model1 <- lmer(density ~
+                        1
+                        + (1 | site_combined),
+                        data = wave2)
+
+icc(model1)
+# 4.3% of variance due to clustering between sites
+```
+
+## Cost
+
+```{r}
+model2 <- lmer(density ~
+                        cost_small
+                        + (1 | site_combined),
+                        data = wave2)
+
+model3 <- lmer(density ~
+                        cost_small
+                        + (cost_small | site_combined),
+                        data = wave2)
+
+visualize(model3, plot="model")
+```
