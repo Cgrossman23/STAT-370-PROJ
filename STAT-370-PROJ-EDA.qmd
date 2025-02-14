@@ -101,7 +101,7 @@ summary(EDA$density_typ)
 summary(EDA$density)
 ```
 
-# Distribution of Explanatory Variables
+# Distribution of Explanatory And Response Variables
 
 ## Cost (predicted intensity of wave)
 
@@ -156,6 +156,15 @@ ggplot(EDA, aes(x = slope_use, fill = exposure)) +
 ggplot(EDA, aes(x = speed_limit)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(title = "Distribution of Speed Limit", x = "Speed Limit", y = "Frequency") +
+  theme_minimal()
+```
+
+## Density
+
+```{r}
+ggplot(EDA, aes(x = density)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Distribution of Density", x = "Speed Limit", y = "Frequency") +
   theme_minimal()
 ```
 
