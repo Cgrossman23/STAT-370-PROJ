@@ -102,98 +102,142 @@ wave_d <- wave2 %>% filter(site_combined == "D")
 ```{r}
 coords_a <- cbind(wave_a$latitude, wave_a$longitude)
 
-distances_a <- seq(0.000085, 0.000095, by = 0.000001)
-
-values_a <- numeric(length(distances_a))
-
-for (i in seq_along(distances_a)) {
-
-  neighbors_a <- dnearneigh(coords_a, d1 = 0, d2 = distances_a[i])
-  
-  if (length(neighbors_a) == 0) {next}
-  
-  dists_a <- nbdists(neighbors_a, coords_a)
-  
-  weights_a <- nb2listw(neighbors_a, 
-                        glist = lapply(dists_a, function(x) 1 / x), 
+distances <- seq(0.000001, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi <- -Inf  
+od <- NA
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords_a, d1 = 0, d2 = distances[i]) #insert cords
+  if (length(neighbors) == 0) { next }
+  dists <- nbdists(neighbors, coords_a) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
                         style = "W", 
                         zero.policy = TRUE)
+  moran_results <- moran(wave_a$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
   
-  moran_results <- moran(wave_a$density, weights_a, length(neighbors_a), Szero(weights_a))
-
-  values_a[i] <- moran_results$I
+  if (!is.na(values[i]) && values[i] > mmi) {
+    mmi <- values[i]
+    od <- distances[i]
   }
+}
+cat("Maximum Moran's I:", mmi, "\n")
+cat("Optimal Distance:", od, "\n")
 
-values_a
+neighbors <- dnearneigh(coords_a, d1 = 0, d2 = od)
 
-options(scipen = 999)
-plot(distances_a, values_a, type = "b", pch = 19, col = "blue", ylim = range(.2, .4), xlab = "Max Distance", ylab = "Moran's I", main = "Optimizing Distance for Spatial Autocorrelation")
+plot(neighbors,coords_a, col = "red")
 
-# maximizing value is a distance of 0.000087
-
-neighbors_a <- dnearneigh(coords_a, d1 = 0, d2 = 0.000087)
-  
-plot(neighbors_a, wave_a$coords, col = "red")
-
-dists_a <- nbdists(neighbors_a, coords_a)
-  
-weights_a <- nb2listw(neighbors_a, 
-                        glist = lapply(dists_a, function(x) 1 / x), 
-                        style = "W", 
-                        zero.policy = TRUE)
-  
-moran_results_a <- moran(wave_a$density, weights_a, length(neighbors_a), Szero(weights_a))
-
-moran_results_a
 ```
 
 ## Site B
 
 ```{r}
-wave_b$coords <- cbind(wave_b$latitude, wave_b$longitude)
+coords_b <- cbind(wave_b$latitude, wave_b$longitude)
   
-wave_b$knn_nb <- knn2nb(knearneigh(wave_b$coords, k = 2))
+distances <- seq(0.00012, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi <- -Inf  
+od <- NA
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords_b, d1 = 0, d2 = distances[i]) #insert cords
+  if (length(neighbors) == 0) { next }
+  dists <- nbdists(neighbors, coords_b) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave_b$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
+  
+  if (!is.na(values[i]) && values[i] > mmi) {
+    mmi <- values[i]
+    od <- distances[i]
+  }
+}
+cat("Maximum Moran's I:", mmi, "\n")
+cat("Optimal Distance:", od, "\n")
 
-plot(wave_b$knn_nb, wave_b$coords, col = "red")
+neighbors <- dnearneigh(coords_b, d1 = 0, d2 = od)
 
-weights <- nb2listw(wave_b$knn_nb, style = "W")
-
-moran(wave_b$density, weights, length(wave_b$knn_nb), Szero(weights))
-
-# 0.1537179
+plot(neighbors,coords_b, col = "red")
 
 ```
 
 ## Site C
 
 ```{r}
-wave_c$coords <- cbind(wave_c$latitude, wave_c$longitude)
+coords_c <- cbind(wave_c$latitude, wave_c$longitude)
   
-wave_c$knn_nb <- knn2nb(knearneigh(wave_c$coords, k = 2))
+distances <- seq(0.00001, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi <- -Inf  
+od <- NA
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords_c, d1 = 0, d2 = distances[i]) #insert cords
+  if (length(neighbors) == 0) { next }
+  dists <- nbdists(neighbors, coords_c) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave_c$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
+  
+  if (!is.na(values[i]) && values[i] > mmi) {
+    mmi <- values[i]
+    od <- distances[i]
+  }
+}
+cat("Maximum Moran's I:", mmi, "\n")
+cat("Optimal Distance:", od, "\n")
 
-plot(wave_c$knn_nb, wave_c$coords, col = "red")
+neighbors <- dnearneigh(coords_c, d1 = 0, d2 = od)
 
-weights <- nb2listw(wave_c$knn_nb, style = "W")
-
-moran(wave_c$density, weights, length(wave_c$knn_nb), Szero(weights))
-# 0.3214291
+plot(neighbors,coords_c, col = "red")
 
 ```
 
 ## Site D
 
 ```{r}
-wave_d$coords <- cbind(wave_d$latitude, wave_d$longitude)
+coords_d <- cbind(wave_d$latitude, wave_d$longitude)
+
+distances <- seq(0.00001, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi <- -Inf  
+od <- NA
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords_d, d1 = 0, d2 = distances[i]) #insert cords
+  if (length(neighbors) == 0) { next }
+  dists <- nbdists(neighbors, coords_d) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave_c$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
   
-wave_d$knn_nb <- knn2nb(knearneigh(wave_d$coords, k = 2))
+  if (!is.na(values[i]) && values[i] > mmi) {
+    mmi <- values[i]
+    od <- distances[i]
+  }
+}
+cat("Maximum Moran's I:", mmi, "\n")
+cat("Optimal Distance:", od, "\n")
 
-plot(wave_d$knn_nb, wave_d$coords, col = "red")
+neighbors <- dnearneigh(coords_d, d1 = 0, d2 = od)
 
-weights <- nb2listw(wave_d$knn_nb, style = "W")
-
-moran(wave_d$density, weights, length(wave_d$knn_nb), Szero(weights))
-# 0.7711229
-
+plot(neighbors,coords_d, col = "red")
 ```
 
 # Models
