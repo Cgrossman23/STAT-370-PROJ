@@ -11,13 +11,18 @@ editor: visual
 library(RCurl)
 library(janitor)
 library(dplyr)
+
+#mixed model libraries
 library(lme4)
 library(HLMdiag)
-
-install.packages("devtools")
 devtools::install_github("dustinfife/flexplot")
-
 library(flexplot)
+
+#geographic regression libraries
+library(spdep)
+
+
+
 ```
 
 # Importing {.appendix}
@@ -80,10 +85,115 @@ wave <- wave %>% mutate(plant_type = case_when(
                 TRUE ~ NA_character_ ))
 ```
 
-## Filter for Unexposed
+## Filter for Unexposed and Site
 
 ```{r}
 wave2 <- wave %>% filter(exposure == "Unexposed")
+wave_a <- wave2 %>% filter(site_combined == "A")
+wave_b <- wave2 %>% filter(site_combined == "B")
+wave_c <- wave2 %>% filter(site_combined == "C")
+wave_d <- wave2 %>% filter(site_combined == "D")
+```
+
+# Geographical Correlation
+
+## Site A
+
+```{r}
+coords_a <- cbind(wave_a$latitude, wave_a$longitude)
+
+distances_a <- seq(0.000085, 0.000095, by = 0.000001)
+
+values_a <- numeric(length(distances_a))
+
+for (i in seq_along(distances_a)) {
+
+  neighbors_a <- dnearneigh(coords_a, d1 = 0, d2 = distances_a[i])
+  
+  if (length(neighbors_a) == 0) {next}
+  
+  dists_a <- nbdists(neighbors_a, coords_a)
+  
+  weights_a <- nb2listw(neighbors_a, 
+                        glist = lapply(dists_a, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  
+  moran_results <- moran(wave_a$density, weights_a, length(neighbors_a), Szero(weights_a))
+
+  values_a[i] <- moran_results$I
+  }
+
+values_a
+
+options(scipen = 999)
+plot(distances_a, values_a, type = "b", pch = 19, col = "blue", ylim = range(.2, .4), xlab = "Max Distance", ylab = "Moran's I", main = "Optimizing Distance for Spatial Autocorrelation")
+
+# maximizing value is a distance of 0.000087
+
+neighbors_a <- dnearneigh(coords_a, d1 = 0, d2 = 0.000087)
+  
+plot(neighbors_a, wave_a$coords, col = "red")
+
+dists_a <- nbdists(neighbors_a, coords_a)
+  
+weights_a <- nb2listw(neighbors_a, 
+                        glist = lapply(dists_a, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  
+moran_results_a <- moran(wave_a$density, weights_a, length(neighbors_a), Szero(weights_a))
+
+moran_results_a
+```
+
+## Site B
+
+```{r}
+wave_b$coords <- cbind(wave_b$latitude, wave_b$longitude)
+  
+wave_b$knn_nb <- knn2nb(knearneigh(wave_b$coords, k = 2))
+
+plot(wave_b$knn_nb, wave_b$coords, col = "red")
+
+weights <- nb2listw(wave_b$knn_nb, style = "W")
+
+moran(wave_b$density, weights, length(wave_b$knn_nb), Szero(weights))
+
+# 0.1537179
+
+```
+
+## Site C
+
+```{r}
+wave_c$coords <- cbind(wave_c$latitude, wave_c$longitude)
+  
+wave_c$knn_nb <- knn2nb(knearneigh(wave_c$coords, k = 2))
+
+plot(wave_c$knn_nb, wave_c$coords, col = "red")
+
+weights <- nb2listw(wave_c$knn_nb, style = "W")
+
+moran(wave_c$density, weights, length(wave_c$knn_nb), Szero(weights))
+# 0.3214291
+
+```
+
+## Site D
+
+```{r}
+wave_d$coords <- cbind(wave_d$latitude, wave_d$longitude)
+  
+wave_d$knn_nb <- knn2nb(knearneigh(wave_d$coords, k = 2))
+
+plot(wave_d$knn_nb, wave_d$coords, col = "red")
+
+weights <- nb2listw(wave_d$knn_nb, style = "W")
+
+moran(wave_d$density, weights, length(wave_d$knn_nb), Szero(weights))
+# 0.7711229
+
 ```
 
 # Models
