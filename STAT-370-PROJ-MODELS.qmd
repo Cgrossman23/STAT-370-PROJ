@@ -127,9 +127,11 @@ for (i in seq_along(distances)) {
 cat("Maximum Moran's I:", mmi, "\n")
 cat("Optimal Distance:", od, "\n")
 
-neighbors <- dnearneigh(coords_a, d1 = 0, d2 = od)
+neighbors_a <- dnearneigh(coords_a, d1 = 0, d2 = od)
 
-plot(neighbors,coords_a, col = "red")
+plot(neighbors_a,coords_a, col = "red")
+
+site_a <- nb2listw(neighbors_a, zero.policy = TRUE)
 
 ```
 
@@ -200,16 +202,17 @@ for (i in seq_along(distances)) {
 cat("Maximum Moran's I:", mmi, "\n")
 cat("Optimal Distance:", od, "\n")
 
-neighbors <- dnearneigh(coords_c, d1 = 0, d2 = od)
+neighbors_c <- dnearneigh(coords_c, d1 = 0, d2 = od)
 
-plot(neighbors,coords_c, col = "red")
+plot(neighbors_c,coords_c, col = "red")
 
+site_c <- nb2listw(neighbors_c, zero.policy = TRUE)
 ```
 
 ## Site D
 
 ```{r}
-coords_d <- cbind(wave_d$latitude, wave_d$longitude)
+wave_d$coords_d <- cbind(wave_d$latitude, wave_d$longitude)
 
 distances <- seq(0.00001, 0.001, by = 0.000001)
 values <- numeric(length(distances))
@@ -238,7 +241,11 @@ cat("Optimal Distance:", od, "\n")
 
 neighbors_d <- dnearneigh(coords_d, d1 = 0, d2 = od)
 
-plot(neighbors_d,coords_d, col = "red")
+point_colors <- ifelse(wave_d$presence_absence == 1, "red", "blue")
+
+plot(neighbors_d, wave_d$coords_d, col = "red")
+
+points(wave_d$coords_d, col = point_colors, pch = 16)
 
 site_d <- nb2listw(neighbors_d, zero.policy = TRUE)
 ```
@@ -259,11 +266,15 @@ summary(model_b) # significant
 summary(model_c) # not significant
 summary(model_d) # significant
 
+lm.morantest(model_a , site_a)
 lm.morantest(model_b , site_b)
+lm.morantest(model_c , site_c)
 lm.morantest(model_d , site_d)
 
-lm.LMtests(model_b , site_b, test = "all")
-lm.LMtests(model_d , site_d, test = "all")
+lm.RStests(model_a , site_a, test = "all")
+lm.RStests(model_b , site_b, test = "all")
+lm.RStests(model_c , site_c, test = "all")
+lm.RStests(model_d , site_d, test = "all")
 
 
 ```
