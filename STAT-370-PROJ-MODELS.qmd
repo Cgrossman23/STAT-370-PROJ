@@ -11,17 +11,18 @@ editor: visual
 library(RCurl)
 library(janitor)
 library(dplyr)
+library(car)
 
 #mixed model libraries
 library(lme4)
 library(HLMdiag)
-devtools::install_github("dustinfife/flexplot")
 library(flexplot)
 
 #geographic regression libraries
 library(spdep)
 
-
+#for zero inflated
+library(pscl)
 
 ```
 
@@ -256,15 +257,47 @@ site_d <- nb2listw(neighbors_d, zero.policy = TRUE)
 
 ```{r}
 f=density~cost_small
+sqrt_f=sqrt(density)~cost_small+fetch_projected+water_depth+slope_use
+cbrt_f <- I(density^(1/3)) ~ cost_small + fetch_projected + water_depth + slope_use
+
+summary(wave_d$density)
 
 model_a <- lm(f , data = wave_a)
 model_b <- lm(f , data = wave_b)
 model_c <- lm(f , data = wave_c)
 model_d <- lm(f , data = wave_d)
+
 summary(model_a) # not significant
+
+plot(resid(model_a) ~ fitted(model_a), main = "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red", lty = 2)
+
+qqnorm(resid(model_a))
+qqline(resid(model_a), col = "red", lty = 2)
+
 summary(model_b) # significant
+
+plot(resid(model_b) ~ fitted(model_b), main = "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red", lty = 2)
+
+qqnorm(resid(model_b))
+qqline(resid(model_b), col = "red", lty = 2)
+
 summary(model_c) # not significant
+
+plot(resid(model_c) ~ fitted(model_c), main = "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red", lty = 2)
+
+qqnorm(resid(model_c))
+qqline(resid(model_c), col = "red", lty = 2)
+
 summary(model_d) # significant
+
+plot(resid(model_d) ~ fitted(model_d), main = "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red", lty = 2)
+
+qqnorm(resid(model_d))
+qqline(resid(model_d), col = "red", lty = 2)
 
 lm.morantest(model_a , site_a)
 lm.morantest(model_b , site_b)
@@ -277,6 +310,15 @@ lm.RStests(model_c , site_c, test = "all")
 lm.RStests(model_d , site_d, test = "all")
 
 
+```
+
+## Zero-Inflated Model
+
+```{r}
+model_zero_d <- zeroinfl(f , data = wave_d, dist="negbin")
+
+summary(model_zero_d)
+vif(model_zero_d)
 ```
 
 ## Baseline
