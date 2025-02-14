@@ -163,10 +163,11 @@ for (i in seq_along(distances)) {
 cat("Maximum Moran's I:", mmi, "\n")
 cat("Optimal Distance:", od, "\n")
 
-neighbors <- dnearneigh(coords_b, d1 = 0, d2 = od)
+neighbors_b <- dnearneigh(coords_b, d1 = 0, d2 = od)
 
-plot(neighbors,coords_b, col = "red")
+plot(neighbors_b,coords_b, col = "red")
 
+site_b <- nb2listw(neighbors_b, zero.policy = TRUE)
 ```
 
 ## Site C
@@ -235,12 +236,37 @@ for (i in seq_along(distances)) {
 cat("Maximum Moran's I:", mmi, "\n")
 cat("Optimal Distance:", od, "\n")
 
-neighbors <- dnearneigh(coords_d, d1 = 0, d2 = od)
+neighbors_d <- dnearneigh(coords_d, d1 = 0, d2 = od)
 
-plot(neighbors,coords_d, col = "red")
+plot(neighbors_d,coords_d, col = "red")
+
+site_d <- nb2listw(neighbors_d, zero.policy = TRUE)
 ```
 
 # Models
+
+## Geographic Residuals
+
+```{r}
+f=density~cost_small
+
+model_a <- lm(f , data = wave_a)
+model_b <- lm(f , data = wave_b)
+model_c <- lm(f , data = wave_c)
+model_d <- lm(f , data = wave_d)
+summary(model_a) # not significant
+summary(model_b) # significant
+summary(model_c) # not significant
+summary(model_d) # significant
+
+lm.morantest(model_b , site_b)
+lm.morantest(model_d , site_d)
+
+lm.LMtests(model_b , site_b, test = "all")
+lm.LMtests(model_d , site_d, test = "all")
+
+
+```
 
 ## Baseline
 

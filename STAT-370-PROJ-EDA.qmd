@@ -556,6 +556,8 @@ leaflet(data = EDA) %>%
 ```{r}
 #| eval: false
 
+EDA$longitude <- ifelse(EDA$longitude > 0, -EDA$longitude, EDA$longitude)
+
 leaflet(data = EDA) %>%
   addTiles() %>%
   addCircleMarkers(
