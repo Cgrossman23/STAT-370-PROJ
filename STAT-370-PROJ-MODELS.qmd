@@ -14,18 +14,21 @@ library(dplyr)
 library(car)
 library(flexplot)
 library(MASS)
+library(ggplot2)
 
 #mixed model libraries
 library(lme4)
 library(HLMdiag)
 library(flexplot)
+library(MuMIn)
+library(glmmTMB) 
 
 #geographic regression libraries
 library(spdep)
+library(deldir)
 
 #for zero inflated
 library(pscl)
-
 ```
 
 # Importing {.appendix}
@@ -33,6 +36,8 @@ library(pscl)
 ```{r}
 data_link <- getURL("https://raw.githubusercontent.com/Cgrossman23/STAT-370-PROJ/refs/heads/main/cleaned_data.csv") 
 wave <- read.csv(text = EDA_GIT_LINK)
+wave <- as.data.frame(wave)
+
 
 # make all var undercase
 
@@ -91,16 +96,25 @@ wave <- wave %>% mutate(plant_type = case_when(
 ## Filter for Unexposed and Site
 
 ```{r}
+wave$longitude <- ifelse(wave$longitude > 0, -wave$longitude, wave$longitude)
+
 wave2 <- wave %>% filter(exposure == "Unexposed")
+wave3 <- wave %>% filter(exposure == "Exposed")
+
 wave_a <- wave2 %>% filter(site_combined == "A")
 wave_b <- wave2 %>% filter(site_combined == "B")
 wave_c <- wave2 %>% filter(site_combined == "C")
 wave_d <- wave2 %>% filter(site_combined == "D")
+
+wave_a2 <- wave3 %>% filter(site_combined == "A")
+wave_b2 <- wave3 %>% filter(site_combined == "B")
+wave_c2 <- wave3 %>% filter(site_combined == "C")
+wave_d2 <- wave3 %>% filter(site_combined == "D")
 ```
 
 # Geographical Correlation
 
-## Site A
+## Site A - unexposed
 
 ```{r}
 coords_a <- cbind(wave_a$latitude, wave_a$longitude)
@@ -137,7 +151,7 @@ cat("Optimal Distance:", od_a, "\n")
 plot(neighbors_a,coords_a, col = "red")
 ```
 
-## Site B
+## Site B - unexposed
 
 ```{r}
 coords_b <- cbind(wave_b$latitude, wave_b$longitude)
@@ -174,7 +188,7 @@ cat("Optimal Distance:", od_b, "\n")
 plot(neighbors_b,coords_b, col = "red")
 ```
 
-## Site C
+## Site C - unexposed
 
 ```{r}
 coords_c <- cbind(wave_c$latitude, wave_c$longitude)
@@ -211,12 +225,12 @@ cat("Optimal Distance:", od_c, "\n")
 plot(neighbors_c,coords_c, col = "red")
 ```
 
-## Site D
+## Site D - unexposed
 
 ```{r}
-wave_d$coords_d <- cbind(wave_d$latitude, wave_d$longitude)
+coords_d <- cbind(wave_d$latitude, wave_d$longitude)
 
-distances <- seq(0.00012, 0.001, by = 0.000001)
+distances <- seq(0.000001, 0.001, by = 0.000001)
 values <- numeric(length(distances))
 values[] <- NA  
 mmi_d <- -Inf  
@@ -248,154 +262,156 @@ cat("Optimal Distance:", od_d, "\n")
 plot(neighbors_d,coords_d, col = "red")
 ```
 
-# Geographic correlation vs Linear Model or ZIM
-
-## Linear
-
-### Models
+## Site A - exposed
 
 ```{r}
-f=density~fetch_projected*water_depth*slope_use
-sqrt_f=sqrt(density)~fetch_projected*water_depth*slope_use
-cbrt_f <- I(density^(1/3)) ~ fetch_projected*water_depth*slope_use
-quad_f <- I(density^(1/4)) ~ fetch_projected*water_depth*slope_use
-log_f <- log(density+1) ~ fetch_projected*water_depth*slope_use
+coords_a2 <- cbind(wave_a2$latitude, wave_a2$longitude)
+
+n_a2 <- knn2nb(knearneigh(coords_a2, k=4, longlat = TRUE))
+wa <- nb2listw(n_a2, style = "W", zero.policy = TRUE)
+mra <- moran(wave_a2$density, wa, length(n_a2), Szero(wa)) 
+
+print(wa)
+head(mra)
+
+plot(n_a2, coords_a2, col = "red")
 ```
 
-### Site A
+## Site B - exposed
 
 ```{r}
-model_a <- lm(f , data = wave_a)
+coords_b2 <- cbind(wave_b2$latitude, wave_b2$longitude)
 
-summary(model_a) # not significant
+n_b2 <- knn2nb(knearneigh(coords_b2, k=3, longlat = TRUE))
+wb <- nb2listw(n_b2, style = "W", zero.policy = TRUE)
+mrb <- moran(wave_b2$density, wb, length(n_b2), Szero(wb)) 
 
-plot(resid(model_a) ~ fitted(model_a), main = "Residuals vs Fitted Site A", xlab = "Fitted Values", ylab = "Residuals")
-abline(h = 0, col = "red", lty = 2)
+print(wb)
+head(mrb)
 
-qqnorm(resid(model_a))
-qqline(resid(model_a), col = "red", lty = 2)
-
-lm.morantest(model_a , weights_a) # significant for: log, sqrt, cbrt
-
-lm.RStests(model_a , weights_a, test = "all")
+plot(n_b2, coords_b2, col = "red")
 ```
 
-### Site B
+## Site C - exposed
 
 ```{r}
-model_b1 <- lm(f , data = wave_b)
-model_b2 <- lm(sqrt_f , data = wave_b)
-model_b3 <- lm(cbrt_f , data = wave_b)
-model_b4 <- lm(quad_f , data = wave_b)
-model_blog <- lm(log_f , data = wave_b)
+coords_c2 <- cbind(wave_c2$latitude, wave_c2$longitude)
 
-step_model_b1 <- stepAIC(model_b1, direction = "both", trace = FALSE)
-step_model_b2 <- stepAIC(model_b2, direction = "both", trace = FALSE)
-step_model_b3 <- stepAIC(model_b3, direction = "both", trace = FALSE)
-step_model_b4 <- stepAIC(model_b4, direction = "both", trace = FALSE)
-step_model_blog <- stepAIC(model_blog, direction = "both", trace = FALSE)
 
-AIC(step_model_b1)
-AIC(step_model_b2)
-AIC(step_model_b3) # best model
-AIC(step_model_b4) # best model
+n_c2 <- knn2nb(knearneigh(coords_c2, k=3, longlat = TRUE))
+wc <- nb2listw(n_c2, style = "W", zero.policy = TRUE)
+mrc <- moran(wave_b2$density, wc, length(n_c2), Szero(wc)) 
 
-AIC(step_model_blog)
+print(wc)
+head(mrc)
 
-summary(model_b3) # significant
-
-plot(resid(model_b) ~ fitted(model_b), main = "Residuals vs Fitted Site B", xlab = "Fitted Values", ylab = "Residuals")
-abline(h = 0, col = "red", lty = 2)
-
-qqnorm(resid(model_b))
-qqline(resid(model_b), col = "red", lty = 2)
-
-lm.morantest(model_b , weights_b)
-
-lm.RStests(model_b , weights_b, test = "all")
+plot(n_c2, coords_c2, col = "red")
 ```
 
-### Site C
+## Site D - exposed
 
 ```{r}
-model_c1 <- lm(f , data = wave_c)
-model_c2 <- lm(sqrt_f , data = wave_c)
-model_c3 <- lm(cbrt_f , data = wave_c)
-model_clog <- lm(log_f , data = wave_c)
+coords_d2 <- cbind(wave_c2$latitude, wave_c2$longitude)
 
-step_model_c1 <- stepAIC(model_c1, direction = "both", trace = FALSE)
-step_model_c2 <- stepAIC(model_c2, direction = "both", trace = FALSE)
-step_model_c3 <- stepAIC(model_c3, direction = "both", trace = FALSE)
-step_model_clog <- stepAIC(model_clog, direction = "both", trace = FALSE)
 
-AIC(step_model_c1)
-AIC(step_model_c2)
-AIC(step_model_c3) # best model
-AIC(step_model_clog)
+n_d2 <- knn2nb(knearneigh(coords_d2, k=3, longlat = TRUE))
+wd <- nb2listw(n_d2, style = "W", zero.policy = TRUE)
+mrd <- moran(wave_c2$density, wd, length(n_d2), Szero(wd)) 
 
-summary(model_c3) # significant
+print(wd)
+head(mrd)
 
-plot(resid(model_c) ~ fitted(model_c), main = "Residuals vs Fitted Site C", xlab = "Fitted Values", ylab = "Residuals")
-abline(h = 0, col = "red", lty = 2)
-
-qqnorm(resid(model_c))
-qqline(resid(model_c), col = "red", lty = 2)
-
-lm.morantest(model_c , weights_c) # insignificant
-
-lm.RStests(model_c , weights_c, test = "all")
+plot(n_d2, coords_d2, col = "red")
 ```
 
-### Site D
+# Geographic correlation vs ZIM
 
-```{r}
-model_d <- lm(log_f , data = wave_d)
+A **zero-inflated model** assumes the observed count data is generated by a mixture of:
 
-summary(model_d) # significant
+-   A **binary process** that determines whether an observation is in the "always-zero" group.
 
-plot(resid(model_d) ~ fitted(model_d), main = "Residuals vs Fitted Site D", xlab = "Fitted Values", ylab = "Residuals")
-abline(h = 0, col = "red", lty = 2)
+-   A **count process** (e.g., Poisson or Negative Binomial) that generates nonzero counts and some additional zeros.
 
-qqnorm(resid(model_d))
-qqline(resid(model_d), col = "red", lty = 2)
+    $$
+    P(Y=0)=\pi+(1-\pi)e^{-\lambda}
+    $$
 
-lm.morantest(model_d , weights_d) # almost significant
+$$
+P(Y=k)=\pi+(1-\pi)\dfrac{\lambda^{k}e^{-\lambda}}{k!},\ k\gt 0
+$$
 
-lm.RStests(model_d , weights_d, test = "all")
-```
+where:
+
+-   $\pi$ is the probability of a **structural zero**.
+
+-   $\lambda$ is the **Poisson mean** for the count-generating process.
 
 ## ZIM
 
 ### Site A
 
+```{r}
+table(wave_a$density)
+
+unique(sort(round(log(wave_a$density+1))))
+unique(sort(round(log(wave_a$density+1)*10)))
+unique(sort(wave_a$density))
+
+wave_a$log_density <- round(log(wave_a$density+1)*10)
+
+model_zero_a <- zeroinfl(log_density ~ fetch_projected , data = wave_a, dist="negbin")
+
+estimates(model_zero_a)
+
+resid_a <- residuals(model_zero_a)
+
+moran_resid_test <- moran.test(resid_a, weights_a)
+
+print(moran_resid_test) # significant
+```
+
 ### Site B
 
 ```{r}
-model_zero_b <- zeroinfl(density ~ fetch_projected , data = wave_b, dist="negbin")
+table(wave_b$density)
+
+unique(sort(round(log(wave_b$density+1))))
+unique(sort(round(log(wave_b$density+1)*10)))
+unique(sort(wave_b$density))
+
+wave_b$log_density <- round(log(wave_b$density+1)*10)
+
+model_zero_b <- zeroinfl(log_density ~ fetch_projected , data = wave_b, dist="negbin")
 
 estimates(model_zero_b)
-summary(model_zero_b)
 
 resid_b <- residuals(model_zero_b)
 
 moran_resid_test <- moran.test(resid_b, weights_b)
 
-print(moran_resid_test)
+print(moran_resid_test) # insignificant
 ```
 
 ### Site C
 
 ```{r}
-model_zero_c1 <- zeroinfl(density ~ fetch_projected , data = wave_c, dist="negbin")
+table(wave_c$density)
 
-estimates(model_zero_c1)
-summary(model_zero_c1)
+unique(sort(round(log(wave_c$density+1))))
+unique(sort(round(log(wave_c$density+1)*10)))
+unique(sort(wave_c$density))
 
-resid_c <- residuals(model_zero_c1)
+wave_c$log_density <- round(log(wave_c$density+1)*10)
+
+model_zero_c <- zeroinfl(log_density ~ fetch_projected , data = wave_c, dist="negbin")
+
+estimates(model_zero_c)
+
+resid_c <- residuals(model_zero_c)
 
 moran_resid_test <- moran.test(resid_c, weights_c)
 
-print(moran_resid_test)
+print(moran_resid_test) # significant
 ```
 
 ### Site D
@@ -409,44 +425,283 @@ unique(sort(wave_d$density))
 
 wave_d$log_density <- round(log(wave_d$density+1)*10)
 
-table(wave_d$log_density)
+m0d <- zeroinfl(log_density ~ fetch_projected , data = wave_d, dist="negbin")
+m0d1 <- zeroinfl(log_density ~ fetch_projected + water_depth , data = wave_d, dist="negbin")
+m0d2 <- zeroinfl(log_density ~ fetch_projected + water_depth + slope_use , data = wave_d, dist="negbin")
 
-model_zero_d1 <- zeroinfl(log_density ~ fetch_projected , data = wave_d, dist="negbin")
+AIC(m0d)
+AIC(m0d1)
+AIC(m0d2)
 
-estimates(model_zero_d1)
+logLik(m0d)
+logLik(m0d1)
+logLik(m0d2)
 
-resid_d <- residuals(model_zero_d1)
+vuong(m0d, m0d1)
 
-moran_resid_test <- moran.test(resid_d, weights_d1)
+estimates(m0d1)
 
-print(moran_resid_test)
+resid_d <- residuals(m0d1)
+
+moran_resid_test <- moran.test(resid_d, weights_d)
+
+print(moran_resid_test) # insignificant
 ```
 
-## Baseline
+## Mixed Effect Model
+
+### Baseline - site_combined
 
 ```{r}
-
 model1 <- lmer(density ~
                         1
                         + (1 | site_combined),
-                        data = wave2)
+                        data = wave)
 
-icc(model1)
-# 4.3% of variance due to clustering between sites
+r_squared <- r.squaredGLMM(model1)
+print(r_squared)
+# 1.48% of variance due to clustering between sites
 ```
 
-## Cost
+### Baseline - exposure nested in site_combined
 
 ```{r}
 model2 <- lmer(density ~
-                        cost_small
+                        1
+                        + (1 | exposure)
                         + (1 | site_combined),
-                        data = wave2)
+                        data = wave)
 
+r_squared2 <- r.squaredGLMM(model2)
+print(r_squared2)
+# 21.66% of variance explained
+
+anova(model2, model1)
+# nested model is better
+```
+
+### Exp - fetch_projected with exposure nested in site_combined
+
+```{r}
 model3 <- lmer(density ~
-                        cost_small
-                        + (cost_small | site_combined),
-                        data = wave2)
+                        fetch_projected
+                        + (1 | exposure)
+                        + (1 | site_combined),
+                        data = wave)
 
-visualize(model3, plot="model")
+r_squared3 <- r.squaredGLMM(model3)
+print(r_squared3)
+# basically zero explanation from fetch
+
+anova(model3, model2)
+# baseline is better
+```
+
+### Exp - water_depth and fetch_projected with exposure nested in site_combined
+
+```{r}
+model4 <- lmer(density ~
+                        fetch_projected
+                        + water_depth
+                        + (1 | exposure)
+                        + (1 | site_combined),
+                        data = wave)
+
+r_squared4 <- r.squaredGLMM(model4)
+print(r_squared4)
+# 2.09% of variance explained by water_depth
+
+anova(model4, model2)
+# close
+```
+
+### Exp - water_depth\*fetch_projected with exposure nested in site_combined
+
+```{r}
+model5 <- lmer(density ~
+                        fetch_projected*water_depth
+                        + (1 | exposure)
+                        + (1 | site_combined),
+                        data = wave)
+
+r_squared5 <- r.squaredGLMM(model5)
+print(r_squared5)
+# 10.03% of variance explained by water_depth*fetch_projected
+
+anova(model5, model2)
+anova(model5, model4)
+# interaction model is better
+```
+
+### ZIM - nested no interaction
+
+```{r}
+model01 <- glmmTMB(density ~ fetch_projected + water_depth 
+                            + (1 | exposure)
+                            + (1 | site_combined),
+                    ziformula = ~ 1, 
+                    family = "nbinom2",
+                    data = wave)
+summary(model01)
+r.squaredGLMM(model01)
+# higher explanatory power in all cases than regular MEM
+
+AIC(model5)
+AIC(model01)
+# much better
+```
+
+### ZIM - nested interaction
+
+```{r}
+model02 <- glmmTMB(density ~ fetch_projected*water_depth 
+                            + (1 | exposure)
+                            + (1 | site_combined),
+                    ziformula = ~ 1, 
+                    family = "nbinom2",
+                    data = wave)
+summary(model02)
+r.squaredGLMM(model02)
+
+anova(model02, model01)
+# worse
+```
+
+### ZIM - nested just water_depth
+
+```{r}
+model03 <- glmmTMB(density ~ water_depth 
+                            + (1 | exposure)
+                            + (1 | site_combined),
+                    ziformula = ~ 1, 
+                    family = "nbinom2",
+                    data = wave)
+summary(model03)
+
+r.squaredGLMM(model03)
+r.squaredGLMM(model01)
+# model 3 is better
+
+anova(model03, model01)
+#close but model 3 is better?
+```
+
+# LISA Model
+
+```{r}
+coords <- cbind(wave$latitude, wave$longitude)
+head(wave$coords)
+distances <- seq(0.00012, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi <- -Inf  
+od <- NA
+neighbors <- NULL
+weights <- NULL
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords, d1 = 0, d2 = distances[i]) #insert cords
+  if (sum(card(neighbors)) == 0) { next }
+  dists <- nbdists(neighbors, coords) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
+  
+  if (!is.na(values[i]) && values[i] > mmi) {
+    mmi <- values[i]
+    od <- distances[i]
+    neighbors <- neighbors
+    weights <- weights
+  }
+}
+cat("Maximum Moran's I:", mmi, "\n")
+cat("Optimal Distance:", od, "\n")
+
+plot(neighbors,coords, col = "red")
+
+# Compute Moran’s I
+moran_test <- moran.test(wave$density, listw = weights, zero.policy = TRUE)
+print(moran_test)
+
+# Global Moran's I is highly significant.
+
+# Comparison to best model found before
+resid <- residuals(model03)
+
+moran_resid_test <- moran.test(resid, weights)
+
+print(moran_resid_test) # significant
+
+# But we know that local clustering effects are likely important as we proved for each site
+```
+
+```{r}
+lmr_a <- localmoran(wave_a$density, weights_a, zero.policy = TRUE)
+lmr_a <- lmr_a[, c(1,5)]
+lmr_a[is.na(lmr_a)] <- 0
+wave_a2 <-cbind(wave_a, lmr_a)
+print(wave_a2)
+
+lmr_b <- localmoran(wave_b$density, weights_b, zero.policy = TRUE)
+lmr_b <- lmr_b[, c(1,5)]
+lmr_b[is.na(lmr_b)] <- 0
+wave_b2 <-cbind(wave_b, lmr_b)
+print(wave_b2)
+
+lmr_c <- localmoran(wave_c$density, weights_c, zero.policy = TRUE)
+lmr_c <- lmr_c[, c(1,5)]
+lmr_c[is.na(lmr_c)] <- 0
+wave_c2 <-cbind(wave_c, lmr_c)
+print(wave_c2)
+
+lmr_d <- localmoran(wave_d$density, weights_d, zero.policy = TRUE)
+lmr_d <- lmr_d[, c(1,5)]
+lmr_d[is.na(lmr_d)] <- 0
+wave_d2 <- cbind(wave_d, lmr_d)
+print(wave_d2)
+
+wave3 <-rbind(wave_a2, wave_b2, wave_c2, wave_d2)
+```
+
+```{r}
+library(Matrix)
+
+weights_list <- list(weights_a, weights_b, weights_c, weights_d, wa, wb, wc, wd)
+
+sparse_weights <- lapply(weights_list, function(w) {
+  mat <- listw2mat(w)
+  as(mat, "CsparseMatrix")
+})
+
+combined_sparse <- bdiag(sparse_weights)
+
+combined_neighbors <- mat2listw(combined_sparse, style = "W", zero.policy = TRUE)
+
+resid <- residuals(model03)
+
+length(resid)
+length(combined_neighbors)
+
+moran_result <- moran.test(resid, combined_neighbors)
+
+print(moran_result)
+```
+
+```{r}
+library(spatialreg)
+
+# Create a new spatial weights matrix for the merged dataset
+merged_coords <- cbind(final_dataset$latitude, final_dataset$longitude)
+merged_neighbors <- dnearneigh(merged_coords, d1 = 0, d2 = max(final_dataset$optimal_distance), zero.policy = TRUE)
+merged_weights <- nb2listw(merged_neighbors, style = "W", zero.policy = TRUE)
+
+# Run a Spatial Lag Model
+formula <- density ~ independent_var1 + independent_var2
+slm_model <- lagsarlm(formula, data = final_dataset, listw = merged_weights, zero.policy = TRUE)
+
+summary(slm_model)
+
 ```
