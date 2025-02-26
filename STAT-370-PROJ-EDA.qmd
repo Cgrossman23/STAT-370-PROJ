@@ -99,6 +99,9 @@ summary(EDA$presence_absence)
 summary(EDA$density_sch)
 summary(EDA$density_typ)
 summary(EDA$density)
+
+test <- EDA %>% filter(presence_absence == 0)
+summary(test)
 ```
 
 # Distribution of Explanatory And Response Variables
