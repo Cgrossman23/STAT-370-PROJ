@@ -453,9 +453,10 @@ anova(model4, model3)
 model01 <- glmmTMB(density ~ exposure + water_depth 
                             + (1 | site_individual),
                     ziformula = ~ 1, 
-                    family = "nbinom2",
+                    family = "genpois",
                     data = wave4)
 summary(model01)
+
 r.squaredGLMM(model01)
 # higher explanatory power in all cases than regular MEM
 
@@ -464,22 +465,7 @@ AIC(model01)
 # much better
 ```
 
-### ZIM - nested interaction
-
-```{r}
-model02 <- glmmTMB(density ~ exposure*water_depth 
-                            + (1 | site_individual),
-                    ziformula = ~ 1, 
-                    family = "nbinom2",
-                    data = wave4)
-summary(model02)
-r.squaredGLMM(model02)
-
-anova(model02, model01)
-# better
-```
-
-# LISA Model
+# Global Model
 
 ```{r}
 coords <- cbind(wave4$latitude, wave4$longitude)
@@ -521,7 +507,7 @@ print(moran_test)
 # Global Moran's I is highly significant.
 
 # Comparison to best model found before
-resid <- residuals(model02)
+resid <- residuals(model01)
 
 moran_resid_test <- moran.test(resid, weights)
 
@@ -556,8 +542,8 @@ for (s in unique(wave4$site_individual)) {
 
 spatial <- glmmTMB(
   density ~ water_depth + exposure + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual),
-  ziformula = ~ 1, 
-  family = "nbinom2",
+  ziformula = ~ 1,
+  family = genpois,
   data = wave4
 )
 
@@ -570,4 +556,6 @@ for (s in c("A", "D", "F", "H")) {
 }
 
 summary(spatial)
+
+r.squaredGLMM(spatial)
 ```
