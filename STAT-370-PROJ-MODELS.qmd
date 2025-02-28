@@ -540,14 +540,23 @@ for (s in unique(wave4$site_individual)) {
   }
 }
 
-spatial <- glmmTMB(
-  density ~ water_depth + exposure + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual),
+spatial <- glmmTMB(density ~ speed_limit + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual),
   ziformula = ~ 1,
-  family = genpois,
+  family = nbinom2,
   data = wave4
 )
 
-wave4$residuals <- residuals(spatial)
+# exposure, water_depth, slope_use, cost_small, fetch_projected, speed_limit
+spatial2 <- glmmTMB(density ~ exposure + water_depth + cost_small + speed_limit + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual),
+  ziformula = ~ 1,
+  family = nbinom2,
+  data = wave4
+)
+
+summary(spatial)
+summary(spatial2)
+
+wave4$residuals <- residuals(spatial2)
 
 for (s in c("A", "D", "F", "H")) {
   site_subset <- wave4[wave4$site_individual == s, ]
@@ -557,5 +566,5 @@ for (s in c("A", "D", "F", "H")) {
 
 summary(spatial)
 
-r.squaredGLMM(spatial)
+r.squaredGLMM(spatial2)
 ```
