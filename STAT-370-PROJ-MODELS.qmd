@@ -308,6 +308,7 @@ resid_a <- residuals(model_zero_a)
 moran_resid_test <- moran.test(resid_a, weights_a)
 
 print(moran_resid_test) # significant
+summary(model_zero_a)
 ```
 
 ### Site B - unexposed
@@ -460,7 +461,6 @@ summary(model01)
 r.squaredGLMM(model01)
 # higher explanatory power in all cases than regular MEM
 
-AIC(model5)
 AIC(model01)
 # much better
 ```
@@ -549,12 +549,14 @@ spatial <- glmmTMB(density ~ speed_limit + spatial_lag1 + spatial_lag2 + spatial
 # exposure, water_depth, slope_use, cost_small, fetch_projected, speed_limit
 spatial2 <- glmmTMB(density ~ exposure + water_depth + cost_small + speed_limit + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual),
   ziformula = ~ 1,
-  family = nbinom2,
+  family = genpois,
   data = wave4
 )
 
 summary(spatial)
 summary(spatial2)
+# is there a certain site responsible for all this deviance?
+# what is the best distribution assumption?
 
 wave4$residuals <- residuals(spatial2)
 
@@ -564,7 +566,17 @@ for (s in c("A", "D", "F", "H")) {
   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
 }
 
-summary(spatial)
-
+r.squaredGLMM(spatial)
 r.squaredGLMM(spatial2)
+```
+
+```{r}
+wave4$presence_absence <- (wave4$presence_absence_sch + wave4$presence_absence_typ)
+
+spatial3 <- glmmTMB(presence_absence ~ exposure + water_depth + cost_small + speed_limit + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual), 
+                    data = wave4, 
+                    family = binomial(link = "logit"))
+
+
+summary(spatial3)
 ```

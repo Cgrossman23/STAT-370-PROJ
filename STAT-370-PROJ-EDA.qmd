@@ -169,6 +169,11 @@ ggplot(EDA, aes(x = density)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(title = "Distribution of Density", x = "Speed Limit", y = "Frequency") +
   theme_minimal()
+
+ggplot(EDA, aes(x = density, fill = exposure)) +
+  geom_histogram(binwidth = 1, color = "black", alpha = 0.7, position = "Identity") +
+  labs(title = "Distribution of Density Across Exposure", x = "Root Density", y = "Frequency") +
+  theme_minimal()
 ```
 
 # Exposure type
