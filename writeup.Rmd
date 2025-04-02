@@ -1,0 +1,33 @@
+---
+title: "Write Up"
+author: "group"
+date: "2025-03-30"
+output: pdf_document
+---
+
+```{r}
+#| echo: false
+library(RCurl)
+EDA_GIT_LINK <- getURL("https://raw.githubusercontent.com/Cgrossman23/STAT-370-PROJ/refs/heads/main/cleaned_data.csv") 
+EDA <- read.csv(text = EDA_GIT_LINK)
+library(tidyverse)
+```
+
+The data has multiple different variables to define certain aspects of the river and the collection. There were important variables, such as water depth, speed limit, fetch, and exposure that could have an impact on the density of bulrush and cattail. The goal of the data analysis was to make a model to predict the density of these plants using predictive variables. There may be variables that affect the density more or less than others. 
+
+A main problem of the situation was correlation among the sites of data collection. Due to the nature of the sites on the exposed side, there sites that were in the same horizontal transect, vertical transect, and site all had different correlations. This poses issues when looking at different statistical models such as a mixed effect model. Certain models would have required complex correlation structures that are difficult to interpret and computationally inefficient. 
+
+### Figure 1.
+
+```{r}
+ggplot(EDA, aes(x = density, fill = exposure)) +
+  geom_histogram(binwidth = 2, color = "black", alpha = 0.7, position = "Identity") +
+  labs(title = "Distribution of Fetch Projected", x = "Fetch Projected", y = "Frequency") +
+  theme_minimal()
+```
+
+Another issue with the potential model was the large influx of zeros included in the data. Due to the exposed nature of the river, many of the readings at the different sites were 0.
+
+
+
+
