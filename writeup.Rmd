@@ -1,0 +1,31 @@
+---
+title: "Write Up"
+author: "group"
+date: "2025-03-30"
+output: pdf_document
+---
+
+```{r echo = FALSE, eval = TRUE, results="hide", message=FALSE, warning=FALSE, fig.keep="none"}
+library(tidyverse)
+data <- read_csv('~/Downloads/STATS/STAT 370/finaldata.csv')
+```
+
+The data has multiple different variables to define certain aspects of the river and the collection. There were important variables, such as water depth, speed limit, fetch, and exposure that could have an impact on the density of bulrush and cattail. The goal of the data analysis was to make a model to predict the density of these plants using predictive variables. There may be variables that affect the density more or less than others. 
+
+A main problem of the situation was correlation among the sites of data collection. Due to the nature of the sites on the exposed side, there sites that were in the same horizontal transect, vertical transect, and site all had different correlations. This poses issues when looking at different statistical models such as a mixed effect model. Certain models would have required complex correlation structures that are difficult to interpret and computationally inefficient. 
+
+### Figure 1.
+
+```{r fig.width=5, fig.height=3, fig.align='center', echo=FALSE}
+ggplot(data, aes(x = density, fill = exposure)) +
+  geom_histogram(binwidth = 2, color = "black", alpha = 0.7, position = "Identity") +
+  scale_fill_manual(values=c('dodgerblue', 'red')) +
+  labs(title = "Distribution of Density", x = "Density of plants", y = "Frequency") +
+  theme_minimal()
+
+```
+
+Another issue with the potential model was the large influx of zeros included in the data. Due to the exposed nature of the river, many of the readings at the different sites were 0. When observing Figure 1, it is clear that a majority of the readings were 0. Also, it appears that many, if not all, of the exposed side had 0 density. With large amounts of zeros, a linear regression model or other models that are similar will not be very useful. 
+
+The model chosen to represent the data was a logistic regression, to predict the variable of presence or absence. Meaning that if there were plants present, it would produce a 1 value, and the opposite for absence. This way there can be different explanatory variables, such as depth, fetch, and exposure. With a logisitc model, there is a odd ratio value that can be calcualted, which is important when trying to understand how an area will be affected by a wake. 
+
