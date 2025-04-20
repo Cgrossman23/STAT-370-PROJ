@@ -291,20 +291,25 @@ where:
 ### Site A - unexposed
 
 ```{r}
-model_zero_a <- zeroinfl(density ~ water_depth , data = wave_a, dist="poisson")
+model_zero_a <- zeroinfl(density ~ water_depth , data = wave_a, dist="negbin")
 
 summary(model_zero_a)
+
+negbin_model_b <- glm.nb(density ~ water_depth, data = wave_a)
+vuong(model_zero_a, negbin_model_b)
 
 poisson_model_b <- glm(density ~ water_depth, family = poisson, data = wave_a)
 vuong(model_zero_a, poisson_model_b)
 
-AIC(model_zero_a, poisson_model_b)
-BIC(model_zero_a, poisson_model_b)
+AIC(model_zero_a, negbin_model_b)
+BIC(model_zero_a, negbin_model_b)
 
 observed_a <- table(wave_a$density)
 predicted_a <- table(round(predict(model_zero_a, type = "response")))
 
 barplot(rbind(observed_a, predicted_a), beside = TRUE, col = c("black", "red"), legend.text = c("Observed", "Predicted"))
+
+model_zero_a$/model_zero_a$df.residual
 
 ###
 
@@ -318,12 +323,17 @@ print(moran_resid_test) # insignificant
 ### Site B - unexposed
 
 ```{r}
-model_zero_b <- zeroinfl(density ~ water_depth , data = wave_b, dist="poisson")
+model_zero_b <- zeroinfl(density ~ water_depth , data = wave_b, dist="negbin")
+model_zero_b2 <- zeroinfl(density ~ water_depth , data = wave_b, dist="poisson")
 
 summary(model_zero_b)
+summary(model_zero_b2)
+
+negbin_model_b <- glm.nb(density ~ water_depth, data = wave_b)
+vuong(model_zero_b, negbin_model_b)
 
 poisson_model_b <- glm(density ~ water_depth, family = poisson, data = wave_b)
-vuong(model_zero_b, poisson_model_b)
+vuong(model_zero_b2, poisson_model_b)
 
 AIC(model_zero_b, poisson_model_b)
 BIC(model_zero_b, poisson_model_b)
@@ -345,15 +355,25 @@ print(moran_resid_test) # insignificant
 ### Site C - unexposed
 
 ```{r}
-model_zero_c <- zeroinfl(density ~ water_depth , data = wave_c, dist="poisson")
+model_zero_c <- zeroinfl(density ~ water_depth , data = wave_c, dist="negbin")
+model_zero_c2 <- zeroinfl(density ~ water_depth , data = wave_c, dist="poisson")
 
 summary(model_zero_c)
+summary(model_zero_c2)
 
-poisson_model_c <- glm(density ~ water_depth , family = poisson, data = wave_c)
-vuong(model_zero_c, poisson_model_c)
+negbin_model_c <- glm.nb(density ~ water_depth, data = wave_c)
+vuong(model_zero_c, negbin_model_c)
 
-AIC(model_zero_c, poisson_model_c)
-BIC(model_zero_c, poisson_model_c)
+poisson_model_b <- glm(density ~ water_depth, family = poisson, data = wave_c)
+vuong(model_zero_c2, poisson_model_b)
+
+
+AIC(model_zero_c, negbin_model_c)
+BIC(model_zero_c, negbin_model_c)
+
+BIC(model_zero_c2, poisson_model_c)
+AIC(model_zero_c2, poisson_model_c)
+
 
 observed_c <- table(wave_c$density)
 predicted_c <- table(round(predict(model_zero_c, type = "response")))
@@ -373,15 +393,23 @@ print(moran_resid_test) # significant
 ### Site D - unexposed
 
 ```{r}
-model_zero_d <- zeroinfl(density ~ water_depth , data = wave_d, dist="poisson")
+model_zero_d <- zeroinfl(density ~ water_depth , data = wave_d, dist="negbin")
+model_zero_d2 <- zeroinfl(density ~ water_depth , data = wave_d, dist="poisson")
 
 summary(model_zero_d)
+summary(model_zero_d2)
+
+negbin_model_d <- glm.nb(density ~ water_depth, data = wave_d)
+vuong(model_zero_d, negbin_model_d)
 
 poisson_model_d <- glm(density ~ water_depth, family = poisson, data = wave_d)
-vuong(model_zero_d, poisson_model_d)
+vuong(model_zero_d2, poisson_model_d)
 
-AIC(model_zero_d, poisson_model_d)
-BIC(model_zero_d, poisson_model_d)
+AIC(model_zero_d, negbin_model_d)
+BIC(model_zero_d, negbin_model_d)
+
+AIC(model_zero_d2, poisson_model_d)
+BIC(model_zero_d2, poisson_model_d)
 
 observed_d <- table(wave_d$density)
 predicted_d <- table(round(predict(model_zero_d, type = "response")))
@@ -473,7 +501,9 @@ AIC(model01)
 # much better
 ```
 
-# Global Model
+# Final Models
+
+## Global Model - ZIM
 
 ```{r}
 coords <- cbind(wave4$latitude, wave4$longitude)
@@ -517,10 +547,49 @@ print(moran_test)
 # Comparison to best model found before
 resid <- residuals(model01)
 
+for (s in c("A", "D", "F", "H")) {
+  site_subset <- wave4[wave4$site_individual == s, ]
+  moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
+  print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
+}
+
 moran_resid_test <- moran.test(resid, weights)
 
 print(moran_resid_test) # significant
+
+# Model
+
+wave4$spatial_lag1_g <- lag.listw(weights, wave4$density)
+wave4$spatial_lag2_g <- lag.listw(weights, wave4$spatial_lag1_g)
+wave4$spatial_lag3_g <- lag.listw(weights, wave4$spatial_lag2_g) 
+
+spatial_G_NB <- glmmTMB(density ~ exposure + spatial_lag1_g + (1 | site_individual),
+  ziformula = ~ 1,
+  family = nbinom1,
+  data = wave4
+)
+
+summary(spatial_G_NB)
+
+spatial_G_GP <- glmmTMB(density ~ exposure + spatial_lag1_g + (1 | site_individual),
+  ziformula = ~ 1,
+  family = genpois,
+  data = wave4
+)
+
+summary(spatial_G_GP)
+
+wave4$residuals <- residuals(spatial_G_NB)
+
+for (s in c("A", "D", "F", "H")) {
+  site_subset <- wave4[wave4$site_individual == s, ]
+  moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
+  print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
+}
+  
 ```
+
+## Site Specific Correlated - ZIM
 
 ```{r}
 wave4$spatial_lag1 <- NA
@@ -548,14 +617,14 @@ for (s in unique(wave4$site_individual)) {
   }
 }
 
-spatial <- glmmTMB(density ~ speed_limit + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual),
+spatial <- glmmTMB(density ~ exposure + cost_small + spatial_lag1 + (1 | site_individual),
   ziformula = ~ 1,
-  family = nbinom2,
+  family = nbinom1,
   data = wave4
 )
 
 # exposure, water_depth, slope_use, cost_small, fetch_projected, speed_limit
-spatial2 <- glmmTMB(density ~ exposure + water_depth + cost_small + speed_limit + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual),
+spatial2 <- glmmTMB(density ~ exposure + cost_small + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual),
   ziformula = ~ 1,
   family = genpois,
   data = wave4
@@ -563,10 +632,11 @@ spatial2 <- glmmTMB(density ~ exposure + water_depth + cost_small + speed_limit 
 
 summary(spatial)
 summary(spatial2)
+
 # is there a certain site responsible for all this deviance?
 # what is the best distribution assumption?
 
-wave4$residuals <- residuals(spatial2)
+wave4$residuals <- residuals(spatial)
 
 for (s in c("A", "D", "F", "H")) {
   site_subset <- wave4[wave4$site_individual == s, ]
@@ -579,9 +649,22 @@ r.squaredGLMM(spatial2)
 ```
 
 ```{r}
+wave4$predicted_count <- predict(spatial, type = "response")
+
+ggplot(wave4, aes(x = predicted_count, y = density)) +
+  geom_jitter(width = 0.2, height = 0.2, alpha = 0.4) +
+  geom_smooth(method = "loess", color = "red") +
+  labs(x = "Predicted Count", y = "Observed Count",
+       title = "Observed vs. Predicted (ZINB1 Model)")
+
+```
+
+## Site Specific Correlated - Logistic Regression
+
+```{r}
 wave4$presence_absence <- (wave4$presence_absence_sch + wave4$presence_absence_typ)
 
-spatial3 <- glmmTMB(presence_absence ~ exposure + water_depth + cost_small + speed_limit + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual), 
+spatial3 <- glmmTMB(presence_absence ~ exposure + cost_small + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual), 
                     data = wave4, 
                     family = binomial(link = "logit"))
 
@@ -594,4 +677,16 @@ for (s in c("A", "D", "F", "H")) {
   moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
 }
+```
+
+```{r}
+wave4$predicted_prob <- predict(spatial3, type = "response")
+
+ggplot(wave4, aes(x = predicted_prob, y = presence_absence)) +
+  geom_jitter(height = 0.05, width = 0, alpha = 0.3) +
+  geom_smooth(method = "loess", formula = y ~ x, se = FALSE, color = "blue") +
+  labs(x = "Predicted Probability", y = "Observed Presence (1) / Absence (0)",
+       title = "Observed vs. Predicted (Logistic GLMM)") +
+  theme_minimal()
+
 ```
