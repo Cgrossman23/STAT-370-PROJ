@@ -157,6 +157,8 @@ The main goal of the project and the client was to find a suitable, accurate, an
 
 Although a valid logistic regression was an output of continued data analysis, there could have been a more thorough analysis completed with the Bayesian analysis as well as understanding the site-specific correlation. In the future, given more time and more data, a less complex correlation structure may yield better results. The zero inflated data and small number of observations did not help the analysis process and given more data these issues could be remediated.
 
+\newpage
+
 # Appendix
 
 | Model | AIC Value |
@@ -176,3 +178,440 @@ Although a valid logistic regression was an output of continued data analysis, t
 | Site-Specific Logistic Regression | 159.7 | \*      | 101.94               |
 
 : Final Model Testing Values
+
+## Code
+
+#### I. Libraries
+
+```{r, warning=FALSE, message=FALSE}
+library(RCurl)
+library(janitor)
+library(dplyr)
+library(car)
+library(flexplot)
+library(MASS)
+library(ggplot2)
+
+#mixed model libraries
+library(lme4)
+library(HLMdiag)
+library(flexplot)
+library(MuMIn)
+library(glmmTMB) 
+
+#geographic regression libraries
+library(spdep)
+library(deldir)
+
+#for zero inflated
+library(pscl)
+```
+
+#### II. Data Manipulation and Cleaning
+
+```{r, results='hide'}
+data_link <- getURL("https://raw.githubusercontent.com/Cgrossman23/STAT-370-PROJ/refs/heads/main/cleaned_data.csv") 
+wave <- read.csv(text = data_link)
+wave <- as.data.frame(wave)
+
+
+# make all var undercase
+
+wave <- clean_names(wave)
+
+# renaming response variables to better names
+
+colnames(wave)[7] <- "presence_absence_sch"
+colnames(wave)[8] <- "density_sch"
+colnames(wave)[9] <- "presence_absence_typ"
+colnames(wave)[10] <- "density_typ"
+names(wave)
+
+names(wave)
+
+wave[, c(1,2,7:15)] <- lapply(wave[, c(1,2,7:15)], function(x) gsub("[^0-9.]", "", x))
+wave[, c(1,2,7:15)] <- lapply(wave[, c(1,2,7:15)], as.numeric)
+
+str(wave)
+
+unique(wave$transect) 
+unique(wave$site_combined) 
+unique(wave$site_individual)
+unique(wave$exposure)
+
+rows_with_na <- wave[!complete.cases(wave), ] 
+print(rows_with_na)  
+unique(rows_with_na$site_combined)
+wave <- na.omit(wave)
+
+# Summarazing response variables
+wave$presence_absence <- (wave$presence_absence_sch + wave$presence_absence_typ)
+wave$density <- (wave$density_sch + wave$density_typ)
+
+wave <- wave %>% mutate(plant_type = case_when( 
+                presence_absence_typ ==  1 ~ "typ", 
+                presence_absence_sch == 1 ~ "sch", 
+                TRUE ~ NA_character_ ))
+
+
+# Filter for Unexposed and Site
+
+wave$longitude <- ifelse(wave$longitude > 0, -wave$longitude, wave$longitude)
+
+wave2 <- wave %>% filter(exposure == "Unexposed")
+wave3 <- wave %>% filter(exposure == "Exposed")
+
+wave_a <- wave2 %>% filter(site_combined == "A")
+wave_b <- wave2 %>% filter(site_combined == "B")
+wave_c <- wave2 %>% filter(site_combined == "C")
+wave_d <- wave2 %>% filter(site_combined == "D")
+
+wave_a2 <- wave3 %>% filter(site_combined == "A")
+wave_b2 <- wave3 %>% filter(site_combined == "B")
+wave_c2 <- wave3 %>% filter(site_combined == "C")
+wave_d2 <- wave3 %>% filter(site_combined == "D")
+
+wave4 <- rbind(wave_a, wave_b, wave_c, wave_d, wave_a2, wave_b2, wave_c2, wave_d2)
+```
+
+#### III. Geographical Correlation
+
+##### III.a. Site A
+
+```{r}
+# Site A
+coords_a <- cbind(wave_a$latitude, wave_a$longitude)
+
+distances <- seq(0.000001, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi_a <- -Inf  
+od_a <- NA
+neighbors_a <- NULL
+weights_a <- NULL
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords_a, d1 = 0, d2 = distances[i]) #insert cords
+  if (sum(card(neighbors)) == 0) { next }
+  dists <- nbdists(neighbors, coords_a) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave_a$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
+  
+  if (!is.na(values[i]) && values[i] > mmi_a) {
+    mmi_a <- values[i]
+    od_a <- distances[i]
+    neighbors_a <- neighbors
+    weights_a <- weights
+  }
+}
+cat("Maximum Moran's I:", mmi_a, "\n")
+cat("Optimal Distance:", od_a, "\n")
+
+plot(neighbors_a,coords_a, col = "red")
+```
+
+##### III.b. Site B
+
+```{r}
+coords_b <- cbind(wave_b$latitude, wave_b$longitude)
+  
+distances <- seq(0.00012, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi_b <- -Inf  
+od_b <- NA
+neighbors_b <- NULL
+weights_b <- NULL
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords_b, d1 = 0, d2 = distances[i]) #insert cords
+  if (sum(card(neighbors)) == 0) { next }
+  dists <- nbdists(neighbors, coords_b) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave_b$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
+  
+  if (!is.na(values[i]) && values[i] > mmi_b) {
+    mmi_b <- values[i]
+    od_b <- distances[i]
+    neighbors_b <- neighbors
+    weights_b <- weights
+  }
+}
+cat("Maximum Moran's I:", mmi_b, "\n")
+cat("Optimal Distance:", od_b, "\n")
+
+plot(neighbors_b,coords_b, col = "red")
+```
+
+##### III.c. Site C
+
+```{r}
+coords_c <- cbind(wave_c$latitude, wave_c$longitude)
+  
+distances <- seq(0.000001, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi_c <- -Inf  
+od_c <- NA
+neighbors_c <- NULL
+weights_c <- NULL
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords_c, d1 = 0, d2 = distances[i]) #insert cords
+  if (sum(card(neighbors)) == 0) { next }
+  dists <- nbdists(neighbors, coords_c) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave_c$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
+  
+  if (!is.na(values[i]) && values[i] > mmi_c) {
+    mmi_c <- values[i]
+    od_c <- distances[i]
+    neighbors_c <- neighbors
+    weights_c <- weights
+  }
+}
+cat("Maximum Moran's I:", mmi_c, "\n")
+cat("Optimal Distance:", od_c, "\n")
+
+plot(neighbors_c,coords_c, col = "red")
+```
+
+##### III.d. Site D
+
+```{r}
+coords_d <- cbind(wave_d$latitude, wave_d$longitude)
+
+distances <- seq(0.00012, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi_d <- -Inf  
+od_d <- NA
+neighbors_d <- NULL
+weights_d <- NULL
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords_d, d1 = 0, d2 = distances[i]) #insert cords
+  if (sum(card(neighbors)) == 0) { next }
+  dists <- nbdists(neighbors, coords_d) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave_d$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
+  
+  if (!is.na(values[i]) && values[i] > mmi_d) {
+    mmi_d <- values[i]
+    od_d <- distances[i]
+    neighbors_d <- neighbors
+    weights_d <- weights
+  }
+}
+cat("Maximum Moran's I:", mmi_d, "\n")
+cat("Optimal Distance:", od_d, "\n")
+
+plot(neighbors_d,coords_d, col = "red")
+```
+
+#### IV. Zero Inflated Models
+
+##### IV.a. Site A
+
+```{r}
+model_zero_a <- zeroinfl(density ~ water_depth , data = wave_a, dist="negbin")
+
+summary(model_zero_a)
+
+negbin_model_b <- glm.nb(density ~ water_depth, data = wave_a)
+vuong(model_zero_a, negbin_model_b)
+
+poisson_model_b <- glm(density ~ water_depth, family = poisson, data = wave_a)
+vuong(model_zero_a, poisson_model_b)
+
+AIC(model_zero_a, negbin_model_b)
+BIC(model_zero_a, negbin_model_b)
+
+observed_a <- table(wave_a$density)
+predicted_a <- table(round(predict(model_zero_a, type = "response")))
+
+barplot(rbind(observed_a, predicted_a), beside = TRUE, col = c("black", "red"), legend.text = c("Observed", "Predicted"))
+
+model_zero_a$model_zero_a$df.residual
+
+###
+
+resid_a <- residuals(model_zero_a)
+
+moran_resid_test <- moran.test(resid_a, weights_a)
+
+print(moran_resid_test) # insignificant
+```
+
+##### IV.b. Site B
+
+```{r}
+model_zero_b <- zeroinfl(density ~ water_depth , data = wave_b, dist="negbin")
+model_zero_b2 <- zeroinfl(density ~ water_depth , data = wave_b, dist="poisson")
+
+summary(model_zero_b)
+summary(model_zero_b2)
+
+negbin_model_b <- glm.nb(density ~ water_depth, data = wave_b)
+vuong(model_zero_b, negbin_model_b)
+
+poisson_model_b <- glm(density ~ water_depth, family = poisson, data = wave_b)
+vuong(model_zero_b2, poisson_model_b)
+
+AIC(model_zero_b, poisson_model_b)
+BIC(model_zero_b, poisson_model_b)
+
+observed_b <- table(wave_b$density)
+predicted_b <- table(round(predict(model_zero_b, type = "response")))
+
+barplot(rbind(observed_b, predicted_b), beside = TRUE, col = c("black", "red"), legend.text = c("Observed", "Predicted"))
+
+###
+
+resid_b <- residuals(model_zero_b)
+
+moran_resid_test <- moran.test(resid_b, weights_b)
+
+print(moran_resid_test) # insignificant
+```
+
+##### IV.c. Site C
+
+```{r}
+model_zero_c <- zeroinfl(density ~ water_depth , data = wave_c, dist="negbin")
+model_zero_c2 <- zeroinfl(density ~ water_depth , data = wave_c, dist="poisson")
+
+summary(model_zero_c)
+summary(model_zero_c2)
+
+negbin_model_c <- glm.nb(density ~ water_depth, data = wave_c)
+vuong(model_zero_c, negbin_model_c)
+
+poisson_model_c <- glm(density ~ water_depth, family = poisson, data = wave_c)
+vuong(model_zero_c2, poisson_model_c)
+
+
+AIC(model_zero_c, negbin_model_c)
+BIC(model_zero_c, negbin_model_c)
+
+BIC(model_zero_c2, poisson_model_c)
+AIC(model_zero_c2, poisson_model_c)
+
+
+observed_c <- table(wave_c$density)
+predicted_c <- table(round(predict(model_zero_c, type = "response")))
+
+barplot(rbind(observed_c, predicted_c), beside = TRUE, col = c("black", "red"),
+        legend.text = c("Observed", "Predicted"))
+
+###
+
+resid_c <- residuals(model_zero_c)
+
+moran_resid_test <- moran.test(resid_c, weights_c)
+
+print(moran_resid_test) # significant
+```
+
+##### IV.d. Site D
+
+```{r}
+model_zero_d <- zeroinfl(density ~ water_depth , data = wave_d, dist="negbin")
+model_zero_d2 <- zeroinfl(density ~ water_depth , data = wave_d, dist="poisson")
+
+summary(model_zero_d)
+summary(model_zero_d2)
+
+negbin_model_d <- glm.nb(density ~ water_depth, data = wave_d)
+vuong(model_zero_d, negbin_model_d)
+
+poisson_model_d <- glm(density ~ water_depth, family = poisson, data = wave_d)
+vuong(model_zero_d2, poisson_model_d)
+
+AIC(model_zero_d, negbin_model_d)
+BIC(model_zero_d, negbin_model_d)
+
+AIC(model_zero_d2, poisson_model_d)
+BIC(model_zero_d2, poisson_model_d)
+
+observed_d <- table(wave_d$density)
+predicted_d <- table(round(predict(model_zero_d, type = "response")))
+
+barplot(rbind(observed_d, predicted_d), beside = TRUE, col = c("black", "red"), legend.text = c("Observed", "Predicted"))
+
+###
+
+resid_d <- residuals(model_zero_d)
+
+moran_resid_test <- moran.test(resid_d, weights_d)
+
+print(moran_resid_test) # significant
+```
+
+#### V. Mixed Effects Models
+
+##### V.a. Baseline
+
+```{r}
+model1 <- lmer(density ~ 1 + (1 | site_individual), data = wave4)
+summary(model1)
+r_squared <- r.squaredGLMM(model1)
+print(r_squared)
+```
+
+##### V.b. Exp - Exposure Nested in site_individual
+
+```{r}
+model2 <- lmer(density ~ exposure + (1 | site_individual), data = wave4)
+r_squared2 <- r.squaredGLMM(model2)
+print(r_squared2)
+anova(model2, model1)
+```
+
+##### V.c. Exp - Full Explanatory Variables
+
+```{r}
+model3 <- lmer(density ~  water_depth + exposure + (1 | site_individual), data = wave4)
+r_squared3 <- r.squaredGLMM(model3)
+print(r_squared3)
+anova(model3, model2)
+```
+
+##### V.d. Exp - Interaction term with Exposure nested in site_combined
+
+```{r}
+model4 <- lmer(density ~ exposure*water_depth + (1 | site_individual), data = wave4)
+r_squared4 <- r.squaredGLMM(model4)
+print(r_squared4)
+anova(model4, model3)
+```
+
+##### V.e. ZIM with Mixed Effect
+
+```{r}
+#model01 <- glmmTMB(density ~ exposure + water_depth + (1 | site_individual),
+ #                   ziformula = ~ 1, 
+  #                  family = "genpois",
+   #                 data = wave4)
+#summary(model01)
+#r.squaredGLMM(model01)
+#AIC(model01)
+```
+
+#### Final Models
