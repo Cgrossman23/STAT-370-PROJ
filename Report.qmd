@@ -97,6 +97,82 @@ The first explanatory models were constructed with just a zero-inflated element.
 
 The assumed underlying distribution for the zero-inflated model was a Poisson distribution. The formula for this model is as follows:
 
+$$
+P(y_i = 0) = \phi_i + (1 - \phi_i) * e^{-\lambda_i}
+$$
+
+$$
+P(y_i = k) = (1 - \phi_i)\frac{e^{-\lambda_i} * \lambda_i^k}{k!}
+$$
+
+$$
+\text{Where } \lambda_i = e^{x_i\beta} 
+$$
+
+#### II.b.3. Mixed-Effect Models 
+
+Due to the cluster aspect of the data and four different collection sites, a mixed effect model was assumed to be an accurate representation of the data. The clustered nature of the locations causes a lack of independent, which indicates that a random effect would help represent these clusters. Using the lme4 package in R, a mixed effect model can be used. The first model ran was just a baseline model with the individual sites being a random effect and the only explanatory variable, using the full data set. Using this model, the calculated r-squared was found to be 15.85%, so about 15.85% of the variance was due to the clustered nature of the sites. Within each of these sites, exposure was nested, therefore adding exposure to the model as a fixed effect. This model now had a lower r-squared of 11.46%. Comparing the baseline model with model with exposure, using a log-likelihood test, the model with exposure included was better. This was also consistent with the AIC and BIC values found. Another model was run including water depth as another explanatory variable. The r-squared was found to be about 12.85%, and running the same likelihood tests, the full model was better. The last model ran was the full model plus an interaction term which was slightly better, there was not much of a difference.
+
+These models are seemingly strong and explanatory, however, there is still some issues with correlation, as well as large numbers of zero response variables.
+
+#### **II.b.4. Global Spatial-Lag Models**
+
+Lastly, the creation of a global model was conducted in order to create a summary measure of the influence of the exposure variable across sites. This involved the creation of two models: a zero-inflated model which accounts for root density, and a logistic regression model that simply accounts for plant presence or absence.
+
+#### **II.b.4.1. Global ZIM**
+
+This model combines elements of a zero-inflated model, random intercepts, and geographical autocorrelation, where spatial lags are entered as predictor variables for each individual observation.  The underlying distribution is as follows:
+
+Furthermore, the Poisson mean is calculated using the coefficient estimates for our explanatory variables and our spatial lag variables.
+
+Lastly, our random intercept effects follow a normal distribution centered at a mean of 0 and a standard deviation derived from variance observed across *site_individual*.
+
+#### **II.b.4.2.  Global Logistic Regression**
+
+The global logistic regression model constructed instead removes the zero-inflated aspect of the prior model. This model loses the nuance of root density counts in favor of simplicity and ease of interpretation. The underlying distribution is assumed to be a Bernoulli process with the following formation:
+
+Again here our random intercepts follow a normal distribution centered at 0 and a standard deviation that is derived from variances across *site_individual*.
+
 # III. Results
 
+### III.a. Final Mixed-Effects Model
+
+It was clear from the exploratory data analysis as well as the calculation of Moran’s I values that there was geographical correlation amongst the sites. The first step to try and remediate and account for the correlation was a mixed effect model. There were four different mixed effects model created each with a random intercept and different levels of predictor variables. As mentioned in section II.b.3, the best model with a random intercept was the full model, where the interaction term had a negligible significance. The differences in AIC can be seen in Table 1. When incorporating the zero-inflated model aspect with the same predictors, the AIC was drastically decreased, indicating that the zero inflated aspect was significant. Even though these analyses deemed appropriate due to the clustering of the four individual sites, there is still correlation horizontally and vertically that needs to be accounted for in the model.
+
+### III.b. Final Zero Inflated Models
+
+Due to the large number of zeros that were included in the data, a zero inflated model appeared to be a method that would yield significant results. As described in section II.b.4.1, the zero inflated model was predicting density by exposure, the spatial lags variable, and the random effect of individual sites. This model considers all the datapoints across each of the four sites. As seen in Table 2, there is a large AIC value as well as a high odds ratio. By itself these values do not mean much, however compared to other final models, conclusions can be made about the model. Another zero inflated model was created that had a site-specific spatial lag predictive variable along with exposure, cost, and individual site as a random effect. This method yielded a smaller AIC and odds ratio, as seem in Table 2. Comparatively, it appears that the site-specific model may be a better model than the global model.
+
+### III.c. Final Logistic Regression Model
+
+The last model created in hopes to accurately capture the data was site specific logistic regression with the same predictor variables including the random intercept effect. This model had a binary response variable, the presence of either of the plants would be a one, where absence would be a zero. This yielded an even lower AIC value as seen in Table 2. The AIC was improved greatly, indicating that the logistic regression may be the best fit for the data.
+
+### **III.d. Model Comparison**
+
+The zero inflated model and the logistic regression have different characteristics that could be more useful for the data and accurately predict presence or absence. The two zero inflated models are very complicated and may be hard to interpret the results and predictive outputs of the model. However, both models maintain the root density details. The observed and predicted values of the site specific zero inflated can be seen graphed in Graph 1.  It appears that the model accurately predicts the values, especially at zero, but there could have been a better fit with larger values. Logistic regression provides a slightly simpler and interpretable model. It does loose some of the detail in the root density that the zero inflated model preserves. In Graph 2, it appears that the model accurately can predict the presence or absence binary response. Based on the observed values of AIC and odds ratios, the logistic regression with site specific spatial lag predictor variables is the best fit for the data.
+
 # IV. Conclusion
+
+The main goal of the project and the client was to find a suitable, accurate, and interpretable model for the St. Mary’s River. With understanding the distributions, creating spatial lags to account for correlation, and the inclusions of mixed effects, the best model was the site-specific logistic regression. The binary response variable was deemed to be the most appropriate, due to the large number of zeros.
+
+Although a valid logistic regression was an output of continued data analysis, there could have been a more thorough analysis completed with the Bayesian analysis as well as understanding the site-specific correlation. In the future, given more time and more data, a less complex correlation structure may yield better results. The zero inflated data and small number of observations did not help the analysis process and given more data these issues could be remediated.
+
+# Appendix
+
+| Model | AIC Value |
+|------------------------------------|------------------------------------|
+| Baseline with individual site random intercept | 2378.9 |
+| Exposure with individual site random intercept | 2370.4 |
+| Water depth, exposure, and individual site random intercept | 2366.8 |
+| Water depth, exposure, interaction term, and individual site random intercept | 2364.8 |
+| Water depth, exposure, and individual site random intercept, zero inflated | 712.5 |
+
+: Mixed Effect Models AIC Values
+
+| Model                             | AIC   | P-Value | Exposure Odds Ration |
+|-----------------------------------|-------|---------|----------------------|
+| Global Zero Inflated              | 716   | 0.00044 | 353.01               |
+| Site-Specific Zero Inflated       | 709.3 | 0.0178  | 144.43               |
+| Site-Specific Logistic Regression | 159.7 | \*      | 101.94               |
+
+: Final Model Testing Values
