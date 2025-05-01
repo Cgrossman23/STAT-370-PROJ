@@ -4,7 +4,6 @@ format: pdf
 author: Ashley Ciss, Coleton Grossman, William Quinn
 editor: visual
 indent: true
-whitespace: small
 ---
 
 # I. Introduction
@@ -123,7 +122,19 @@ Lastly, the creation of a global model was conducted in order to create a summar
 
 This model combines elements of a zero-inflated model, random intercepts, and geographical autocorrelation, where spatial lags are entered as predictor variables for each individual observation.  The underlying distribution is as follows:
 
+$$
+\text{logit}(\pi_i) = \gamma_0
+$$
+
+$$
+P(Y_i = y) = \begin{cases} \pi_i + (1-\pi_i) \cdot f(0; \mu_i, \theta), &  y = 0 \\ (1- \pi_i) \cdot f(y;\mu_i,\theta), &  y > 0 \end{cases}
+$$
+
 Furthermore, the Poisson mean is calculated using the coefficient estimates for our explanatory variables and our spatial lag variables.
+
+$$
+Y_i \sim \text{GenPoisson}(\mu_i, \theta)
+$$
 
 Lastly, our random intercept effects follow a normal distribution centered at a mean of 0 and a standard deviation derived from variance observed across *site_individual*.
 
