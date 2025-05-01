@@ -571,7 +571,8 @@ wave4$spatial_lag1_g <- lag.listw(weights, wave4$density)
 wave4$spatial_lag2_g <- lag.listw(weights, wave4$spatial_lag1_g)
 wave4$spatial_lag3_g <- lag.listw(weights, wave4$spatial_lag2_g) 
 
-spatial_G_NB <- glmmTMB(density ~ exposure + spatial_lag1_g + (1 | site_individual),
+spatial_G_NB <- glmmTMB(
+  density ~ exposure + water_depth + water_depth*exposure + spatial_lag1_g + (1 | site_individual),
   ziformula = ~ 1,
   family = nbinom1,
   data = wave4
@@ -587,11 +588,11 @@ spatial_G_GP <- glmmTMB(density ~ exposure + spatial_lag1_g + (1 | site_individu
 
 summary(spatial_G_GP)
 
-wave4$residuals <- residuals(spatial_G_NB)
+wave4$residuals_global <- residuals(spatial_G_NB)
 
 for (s in c("A", "D", "F", "H")) {
   site_subset <- wave4[wave4$site_individual == s, ]
-  moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
+  moran_test <- moran.test(site_subset$residuals_global, weights_list[[s]])
   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
 }
 ```
@@ -618,11 +619,11 @@ summary(spatial2)
 # is there a certain site responsible for all this deviance?
 # what is the best distribution assumption?
 
-wave4$residuals <- residuals(spatial)
+wave4$residuals_local <- residuals(spatial)
 
 for (s in c("A", "D", "F", "H")) {
   site_subset <- wave4[wave4$site_individual == s, ]
-  moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
+  moran_test <- moran.test(site_subset$residuals_local, weights_list[[s]])
   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
 }
 
@@ -651,7 +652,7 @@ spatial3 <- glmmTMB(presence_absence ~ exposure + cost_small + spatial_lag1 + sp
 
 summary(spatial3)
 
-wave4$residuals <- residuals(spatial3)
+wave4$residuals_logistic <- residuals(spatial3)
 
 for (s in c("A", "D", "F", "H")) {
   site_subset <- wave4[wave4$site_individual == s, ]

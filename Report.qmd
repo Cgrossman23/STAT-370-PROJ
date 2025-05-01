@@ -1,5 +1,5 @@
 ---
-title: "title"
+title: "STAT 370 - Wetland Plant Project"
 format: pdf
 author: Ashley Ciss, Coleton Grossman, William Quinn
 editor: visual
@@ -8,13 +8,13 @@ indent: true
 
 # I. Introduction
 
-Along the St. Mary’s River in Michigan, there are shores being affected by the wake of ships passing through. These wakes can be between one and three meters large and eventually stir up the areas of the river and cause plant disruption. In order to understand the effect of these waves, the density of the plants, bulrush and cattail need to be found. In this specific study, there were four different collection sites, each with a control side and an exposed side.  Each data collection included certain characteristics of the data sight collection. Some of the important ones include exposure, water depth, slope, fetch, and cost distance. The main goal of the data analysis was to create a predictive model that would output the density or presence/absence of these plants in this river.
+Along the St. Mary’s River in Michigan, there are shores being affected by the wake of freighter ships passing through. These wakes can be between one and three meters large and eventually stir up the areas of the river and cause plant growth disruption. In order to understand the effect of these waves, the density of the plants, bulrush and cattail need to be found. In this specific study, there were four different collection sites, each with a control side and an exposed side. Each site had key enviromental variables measured. Some of the important ones include exposure, water depth, slope, fetch, and cost distance. The main goal of the data analysis was to create a predictive model that would output the density or presence/absence of these plants in this river.
 
-Due to the nature and situation of the sites, there was geographical and spatial correlation. Not only was each sight correlated with one another, there were transects vertical and horizontal that also contributed to the correlation. The spatial and geographical set ups of these sites play a significant role in understanding and creating a predictive model. Understanding what the river looks like as well the sites seemed to be one of the most important parts of the process. The data also did not follow a normal distribution, so there were multiple tests completed to find the best fitting distribution for the data, which was a negative binomial distribution. Using both the correlation restrictions and the client’s needs, multiple models were created and tested against each other in order to find the best one. There are different types of models that can be created to accurately represent the data, such as mixed effects, zero inflated models, and logistic regression. The best model for the data that accurately predict the outcome of presence or absence was the logistic regression. Once the best model was found, there was a Bayesian analysis completed because the spatial correlation aspect does not need to be included in the model.
+Due to the spatial nature of the sites, there was spatial correlation and cluster correlation. Not only was each sight correlated with one another, there were transects vertical and horizontal that also contributed to the correlation. The spatial element of these sites play a significant role in understanding and creating an explanatory model. Understanding what the river looks like as well as the sites was one of the most important parts of the process. The data also did not follow a standard discrete distribution, so there were multiple tests completed to find the best fitting distribution for the data, which was a negative binomial distribution. Using both the correlation restrictions and the client’s needs, multiple models were created and tested against each other in order to assess fit. There were different types of models that can be created to accurately represent the data, such as mixed effects, zero inflated models, and logistic regression. The best model for the data that accurately predict the outcome of presence or absence was the logistic regression. Once the best model was found, there was a Bayesian analysis completed because the spatial correlation aspect does not need to be included in the model.
 
 # II. Methods
 
-The consulting process was divided into two major phases: an exploratory data analysis phase and explanatory modeling phase. Most of the statistical analysis and modeling was conducted via R-Studio while some handling of geo-spatial data was conducted via GIS.
+The consulting process was divided into two major phases: an exploratory data analysis phase and explanatory modeling phase. Most of the statistical analysis and modeling was conducted via R-Studio while some handling of geospatial data was conducted via GIS.
 
 ### II.a. Data Visualization
 
@@ -29,7 +29,7 @@ The modeling phase of this project consisted of four distinct sub-phases: creati
 This code section was conducted with the purpose of fully capturing the maximum number of geographical correlations as defined under the Moran’s I equation. The Moran’s I equation resembles the standard variance equation; except that it seeks to account for the strength (or weakness) of geographical correlation via a weighted matrix. The formula for Moran’s I is as follows:
 
 $$
-I = \frac{N \sum_{i=1}^{n}\sum_{j=1}^{n}W_{ij}(X_i - \bar{X})(X_j - \bar{X})}{(\sum_{i=1}^{n}\sum_{j=1}^{n}W_{ij}) \sum_{i=1}^{n}(X_i - \bar{X})^2}
+I(d) = \frac{n \sum_{i=1}^{n}\sum_{j=1}^{n}w_{ij}(X_i - \bar{X})(X_j - \bar{X})}{(\sum_{i=1}^{n}\sum_{j=1}^{n}w_{ij}) \sum_{i=1}^{n}(X_i - \bar{X})^2}
 $$
 
 Moran’s I is a measurement that ranges from \[-1,1\]. A value of 1 represents perfect positive autocorrelation. This would be a geographical data set in which values are perfectly geographically close (or attracted) to other similarly valued observations. A value of -1 represents perfect negative autocorrelation and means that data values are perfectly geographical distant (or repulsed) by other similarly valued observations. Moran’s I values that are near 0 indicate a lack of geographical correlation.
@@ -94,18 +94,29 @@ End pseudo code.
 
 The first explanatory models were constructed with just a zero-inflated element. These models were created in order to test for the significance of geographical correlations within each plot against a properly fitted model. So as to account for clustering effects 4 separate models were constructed: one for each unexposed plot per site. Once a properly fitted model was constructed for each plot, the residuals of the model were tested against the spatial weighted matrix of the plot. This was conducted via the moran.test command found in the *spdep* package.
 
-The assumed underlying distribution for the zero-inflated model was a Poisson distribution. The formula for this model is as follows:
+The assumed underlying distribution for the zero-inflated model was a negative-binomial distribution. The formula for this model is as follows:
 
 $$
-P(y_i = 0) = \phi_i + (1 - \phi_i) * e^{-\lambda_i}
-$$
-
-$$
-P(y_i = k) = (1 - \phi_i)\frac{e^{-\lambda_i} * \lambda_i^k}{k!}
+P(y_i = 0) = \pi_i + (1 - \pi_i) * g(y_i=0)
 $$
 
 $$
-\text{Where } \lambda_i = e^{x_i\beta} 
+P(y_i = k) = (1 - \pi_i)*g(y_i)
+$$
+
+Where $g(y_i)$ is the negative binomial distribution given by:
+
+$$
+g(y_i) = \Pr(Y = y_i \mid \mu_i, \alpha) = 
+\frac{\Gamma(y_i + \alpha^{-1})}{\Gamma(\alpha^{-1}) \Gamma(y_i + 1)}
+\left( \frac{1}{1 + \alpha \mu_i} \right)^{\alpha^{-1}}
+\left( \frac{\alpha \mu_i}{1 + \alpha \mu_i} \right)^{y_i}
+$$
+
+And the logistic link function $\pi_i$ is given by:
+
+$$
+\pi_i=\dfrac{\lambda_i}{1+\lambda_i}
 $$
 
 #### II.b.3. Mixed-Effect Models
@@ -130,10 +141,10 @@ $$
 P(Y_i = y) = \begin{cases} \pi_i + (1-\pi_i) \cdot f(0; \mu_i, \theta), &  y = 0 \\ (1- \pi_i) \cdot f(y;\mu_i,\theta), &  y > 0 \end{cases}
 $$
 
-Furthermore, the Poisson mean is calculated using the coefficient estimates for our explanatory variables and our spatial lag variables.
+Furthermore, the negative binomial mean is calculated using the coefficient estimates for our explanatory variables and our spatial lag variables.
 
 $$
-Y_i \sim \text{GenPoisson}(\mu_i, \theta)
+Y_i \sim \text{NegBin}(\mu_i, \theta)
 $$
 
 Lastly, our random intercept effects follow a normal distribution centered at a mean of 0 and a standard deviation derived from variance observed across *site_individual*.
@@ -172,13 +183,13 @@ Although a valid logistic regression was an output of continued data analysis, t
 
 # Appendix
 
-| Model | AIC Value |
+| Model                                                                         | AIC Value |
 |------------------------------------|------------------------------------|
-| Baseline with individual site random intercept | 2378.9 |
-| Exposure with individual site random intercept | 2370.4 |
-| Water depth, exposure, and individual site random intercept | 2366.8 |
-| Water depth, exposure, interaction term, and individual site random intercept | 2364.8 |
-| Water depth, exposure, and individual site random intercept, zero inflated | 712.5 |
+| Baseline with individual site random intercept                                | 2378.9    |
+| Exposure with individual site random intercept                                | 2370.4    |
+| Water depth, exposure, and individual site random intercept                   | 2366.8    |
+| Water depth, exposure, interaction term, and individual site random intercept | 2364.8    |
+| Water depth, exposure, and individual site random intercept, zero inflated    | 712.5     |
 
 : Mixed Effect Models AIC Values
 
@@ -616,13 +627,13 @@ anova(model4, model3)
 ##### V.e. ZIM with Mixed Effect
 
 ```{r}
-# model01 <- glmmTMB(density ~ exposure + water_depth + (1 | site_individual),
-#                    ziformula = ~ 1,
-#                    family = "genpois",
-#                    data = wave4)
-# summary(model01)
-# r.squaredGLMM(model01)
-# AIC(model01)
+ model01 <- glmmTMB(density ~ exposure + water_depth + (1 | site_individual),
+                    ziformula = ~ 1,
+                    family = "genpois",
+                    data = wave4)
+ summary(model01)
+ r.squaredGLMM(model01)
+ AIC(model01)
 ```
 
 #### VI. Final Models
@@ -702,90 +713,92 @@ wave4$spatial_lag1_g <- lag.listw(weights, wave4$density)
 wave4$spatial_lag2_g <- lag.listw(weights, wave4$spatial_lag1_g)
 wave4$spatial_lag3_g <- lag.listw(weights, wave4$spatial_lag2_g) 
 
-# spatial_G_NB <- glmmTMB(density ~ exposure + spatial_lag1_g + (1 | site_individual),
-#   ziformula = ~ 1,
-#   family = nbinom1,
-#   data = wave4
-# )
-# 
-# summary(spatial_G_NB)
-# spatial_G_GP <- glmmTMB(density ~ exposure + spatial_lag1_g + (1 | site_individual),
-#   ziformula = ~ 1,
-#   family = genpois,
-#   data = wave4
-# )
+spatial_G_NB <- glmmTMB(density ~ exposure + spatial_lag1_g + (1 | site_individual),
+   ziformula = ~ 1,
+   family = nbinom1,
+   data = wave4
+ )
+ 
+ summary(spatial_G_NB)
+ 
+spatial_G_GP <- glmmTMB(density ~ exposure + spatial_lag1_g + (1 | site_individual),
+   ziformula = ~ 1,
+   family = genpois,
+   data = wave4
+ )
 
-# summary(spatial_G_GP)
-# wave4$residuals <- residuals(spatial_G_NB)
-# for (s in c("A", "D", "F", "H")) {
-#   site_subset <- wave4[wave4$site_individual == s, ]
-#   moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
-#   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
-# }
+summary(spatial_G_GP)
+
+wave4$residuals <- residuals(spatial_G_NB)
+for (s in c("A", "D", "F", "H")) {
+   site_subset <- wave4[wave4$site_individual == s, ]
+   moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
+   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
+ }
 ```
 
 ##### VI.b. Site Specific Correlated - ZIM
 
 ```{r}
-# spatial <- glmmTMB(density ~ exposure + water_depth + spatial_lag1 + (1 | site_individual),
-#   ziformula = ~ 1,
-#   family = nbinom1,
-#   data = wave4
-# )
-# 
-# # exposure, water_depth, slope_use, cost_small, fetch_projected, speed_limit
-# spatial2 <- glmmTMB(density ~ exposure + cost_small + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual),
-#   ziformula = ~ 1,
-#   family = genpois,
-#   data = wave4
-# )
-# 
-# summary(spatial)
-# summary(spatial2)
-# 
-# wave4$residuals <- residuals(spatial)
-# 
-# for (s in c("A", "D", "F", "H")) {
-#   site_subset <- wave4[wave4$site_individual == s, ]
-#   moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
-#   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
-# }
-# 
-# r.squaredGLMM(spatial)
-# wave4$predicted_count <- predict(spatial, type = "response")
-# 
-# ggplot(wave4, aes(x = predicted_count, y = density)) +
-#   geom_jitter(width = 0.2, height = 0.2, alpha = 0.4) +
-#   geom_smooth(method = "loess", color = "red") +
-#   labs(x = "Predicted Count", y = "Observed Count",
-#        title = "Observed vs. Predicted (ZINB1 Model)")
+ spatial <- glmmTMB(density ~ exposure + water_depth + spatial_lag1 + (1 | site_individual),
+   ziformula = ~ 1,
+   family = nbinom1,
+   data = wave4
+ )
+ 
+ # exposure, water_depth, slope_use, cost_small, fetch_projected, speed_limit
+ spatial2 <- glmmTMB(density ~ exposure + cost_small + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual),
+   ziformula = ~ 1,
+   family = genpois,
+   data = wave4
+ )
+ 
+ summary(spatial)
+ summary(spatial2)
+ 
+ wave4$residuals <- residuals(spatial)
+ 
+ for (s in c("A", "D", "F", "H")) {
+   site_subset <- wave4[wave4$site_individual == s, ]
+   moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
+   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
+ }
+ 
+ r.squaredGLMM(spatial)
+ wave4$predicted_count <- predict(spatial, type = "response")
+ 
+ ggplot(wave4, aes(x = predicted_count, y = density)) +
+   geom_jitter(width = 0.2, height = 0.2, alpha = 0.4) +
+   geom_smooth(method = "loess", color = "red") +
+   labs(x = "Predicted Count", y = "Observed Count",
+        title = "Observed vs. Predicted (ZINB1 Model)")
 ```
 
 ##### VI.c. Site Specific Correlated - Logistic Regression
 
 ```{r}
-# wave4$presence_absence <- (wave4$presence_absence_sch + wave4$presence_absence_typ)
-# 
-# spatial3 <- glmmTMB(presence_absence ~ exposure + cost_small + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual), 
-#                     data = wave4, 
-#                     family = binomial(link = "logit"))
-# 
-# summary(spatial3)
-# 
-# wave4$residuals <- residuals(spatial3)
-# 
-# for (s in c("A", "D", "F", "H")) {
-#   site_subset <- wave4[wave4$site_individual == s, ]
-#   moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
-#   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
-# }
+ wave4$presence_absence <- (wave4$presence_absence_sch + wave4$presence_absence_typ)
+ 
+ spatial3 <- glmmTMB(presence_absence ~ exposure + cost_small + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual), 
+                     data = wave4, 
+                     family = binomial(link = "logit"))
+ 
+ summary(spatial3)
+ 
+ wave4$residuals <- residuals(spatial3)
+ 
+ for (s in c("A", "D", "F", "H")) {
+   site_subset <- wave4[wave4$site_individual == s, ]
+   moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
+   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
+ }
 
-# wave4$predicted_prob <- predict(spatial3, type = "response")
-# 
-# ggplot(wave4, aes(x = predicted_prob, y = presence_absence)) +
-#   geom_jitter(height = 0.05, width = 0, alpha = 0.3) +
-#   geom_smooth(method = "loess", formula = y ~ x, se = FALSE, color = "blue") +
-#   labs(x = "Predicted Probability", y = "Observed Presence (1) / Absence (0)",
-#        title = "Observed vs. Predicted (Logistic GLMM)") +
-#   theme_minimal()
+ wave4$predicted_prob <- predict(spatial3, type = "response")
+ 
+ ggplot(wave4, aes(x = predicted_prob, y = presence_absence)) +
+   geom_jitter(height = 0.05, width = 0, alpha = 0.3) +
+   geom_smooth(method = "loess", formula = y ~ x, se = FALSE, color = "blue") +
+   labs(x = "Predicted Probability", y = "Observed Presence (1) / Absence (0)",
+        title = "Observed vs. Predicted (Logistic GLMM)") +
+   theme_minimal()
 ```
