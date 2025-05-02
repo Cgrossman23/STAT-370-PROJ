@@ -5,7 +5,6 @@ author: Ashley Ciss, Coleton Grossman, William Quinn
 editor: visual
 indent: true
 ---
-
 # I. Introduction
 
 Along the St. Mary’s River in Michigan, there are shores being affected by the wake of freighter ships passing through. These wakes can be between one and three meters large and eventually stir up the areas of the river and cause plant growth disruption. In order to understand the effect of these waves, the density of the plants, bulrush and cattail need to be found. In this specific study, there were four different collection sites, each with a control side and an exposed side. Each site had key enviromental variables measured. Some of the important ones include exposure, water depth, slope, fetch, and cost distance. The main goal of the data analysis was to create a predictive model that would output the density or presence/absence of these plants in this river.
@@ -121,9 +120,7 @@ $$
 
 #### II.b.3. Mixed-Effect Models
 
-Due to the cluster aspect of the data and four different collection sites, a mixed effect model was assumed to be an accurate representation of the data. The clustered nature of the locations causes a lack of independent, which indicates that a random effect would help represent these clusters. Using the lme4 package in R, a mixed effect model can be used. The first model ran was just a baseline model with the individual sites being a random effect and the only explanatory variable, using the full data set. Using this model, the calculated r-squared was found to be 15.85%, so about 15.85% of the variance was due to the clustered nature of the sites. Within each of these sites, exposure was nested, therefore adding exposure to the model as a fixed effect. This model now had a lower r-squared of 11.46%. Comparing the baseline model with model with exposure, using a log-likelihood test, the model with exposure included was better. This was also consistent with the AIC and BIC values found. Another model was run including water depth as another explanatory variable. The r-squared was found to be about 12.85%, and running the same likelihood tests, the full model was better. The last model ran was the full model plus an interaction term which was slightly better, there was not much of a difference.
-
-These models are seemingly strong and explanatory, however, there is still some issues with correlation, as well as large numbers of zero response variables.
+Due to the cluster aspect of the data and four different collection sites, a mixed effect model was employed so as to account for cluster correlation. The clustered nature of the locations causes a lack of independence, which indicates that a random effect would help represent these clusters. Using the lme4 package in R, a mixed effect model was created. While both random intercepts and slopes were tested, the model only converged when allowing for random intercepts across clusters.
 
 #### **II.b.4. Global Spatial-Lag Models**
 
@@ -157,21 +154,530 @@ Again here our random intercepts follow a normal distribution centered at 0 and 
 
 # III. Results
 
-### III.a. Final Mixed-Effects Model
+### III.a. Preliminary Mixed-Effects Models
 
-It was clear from the exploratory data analysis as well as the calculation of Moran’s I values that there was geographical correlation amongst the sites. The first step to try and remediate and account for the correlation was a mixed effect model. There were four different mixed effects model created each with a random intercept and different levels of predictor variables. As mentioned in section II.b.3, the best model with a random intercept was the full model, where the interaction term had a negligible significance. The differences in AIC can be seen in Table 1. When incorporating the zero-inflated model aspect with the same predictors, the AIC was drastically decreased, indicating that the zero inflated aspect was significant. Even though these analyses deemed appropriate due to the clustering of the four individual sites, there is still correlation horizontally and vertically that needs to be accounted for in the model.
+It was clear from the exploratory data analysis as well as the calculation of Moran’s I values that there was geographical correlation within the sites. However, the first step to try and account for correlation was a mixed effect model. These models did not account for individual observation spatial correlation structures and were conducted with the intent of measuring the necessity and importance of random intercepts for clusters. These models indicated significance of our explanatory variables, however, there is still some issues with correlation, as well as large numbers of zero response observations.
 
-### III.b. Final Zero Inflated Models
+The first model ran was a baseline model with the only explanatory variable being random intercepts for individual sites. Using this model, the calculated r-squared was found to be 15.85%, so about 15.85% of the variance was due to the clustered nature of the sites. This model had an AIC value of roughly 2377.
 
-Due to the large number of zeros that were included in the data, a zero inflated model appeared to be a method that would yield significant results. As described in section II.b.4.1, the zero inflated model was predicting density by exposure, the spatial lags variable, and the random effect of individual sites. This model considers all the datapoints across each of the four sites. As seen in Table 2, there is a large AIC value as well as a high odds ratio. By itself these values do not mean much, however compared to other final models, conclusions can be made about the model. Another zero inflated model was created that had a site-specific spatial lag predictive variable along with exposure, cost, and individual site as a random effect. This method yielded a smaller AIC and odds ratio, as seem in Table 2. Comparatively, it appears that the site-specific model may be a better model than the global model.
+The second model added exposure as an explanatory variable while retaining random intercepts. This model had a marginal r-squared of 11.46% and a conditional r-squared value of 15.18%. This conditional r-squared represents the variance accounted from the inclusions of both the random intercepts and the explanatory variables; while the marginal r-squared indicates only the variance accounted for by the explanatory variable exposure. Comparing the baseline model with model with exposure, using a log-likelihood test, this second model was statistically significantly better at explaining variance than the baseline model, indicating that exposure is a significant variable. This was also consistent with the AIC and BIC values found.
 
-### III.c. Final Logistic Regression Model
+A third model was constructed including water depth as another explanatory variable. The marginal r-squared was found to be about 12.85%, while the conditional r-squared value was found to be 17.15%. Running the same likelihood tests, this full model was better; indicating that accounting for water depth may be important. A model with an interaction term which was tested and slightly better, but the difference was minimal.
 
-The last model created in hopes to accurately capture the data was site specific logistic regression with the same predictor variables including the random intercept effect. This model had a binary response variable, the presence of either of the plants would be a one, where absence would be a zero. This yielded an even lower AIC value as seen in Table 2. The AIC was improved greatly, indicating that the logistic regression may be the best fit for the data.
+| Model                                                                         | R-Squared Marginal | R-Squared Conditional | AIC    | Intercept Variance |
+|---------------|---------------|---------------|---------------|---------------|
+| Baseline with random intercepts                                               | 0                  | 0.1584586             | 2377   | 7.807              |
+| Exposure with random intercepts                                               | 0.1146265          | 0.1517742             | 2370.4 | 1.816              |
+| Water depth, exposure, and random intercept                                   | 0.1285217          | 0.1716464             | 2366.8 | 2.126              |
+| Water depth, exposure, interaction term, and individual site random intercept | 0.1399794          | 0.1928591             | 2364.8 | 2.643              |
 
-### **III.d. Model Comparison**
+There were four different mixed effects model created each with a random intercept and different levels of predictor variables. The best model with a random intercept was the full model, where the interaction term had a negligible significance. The differences in AIC can be seen in Table 1. Lastly, as table 1 shows, random intercept variance is decreased when explanatory variables are included in comparison to the baseline model, suggesting that the significance of cluster correlation decreases as variables are included.
 
-The zero inflated model and the logistic regression have different characteristics that could be more useful for the data and accurately predict presence or absence. The two zero inflated models are very complicated and may be hard to interpret the results and predictive outputs of the model. However, both models maintain the root density details. The observed and predicted values of the site specific zero inflated can be seen graphed in Graph 1.  It appears that the model accurately predicts the values, especially at zero, but there could have been a better fit with larger values. Logistic regression provides a slightly simpler and interpretable model. It does loose some of the detail in the root density that the zero inflated model preserves. In Graph 2, it appears that the model accurately can predict the presence or absence binary response. Based on the observed values of AIC and odds ratios, the logistic regression with site specific spatial lag predictor variables is the best fit for the data.
+### III.b. Preliminary Zero Inflated Models
+
+Due to the large number of zeros that were included in the data, a zero inflated model appeared to be a method that would yield significant results. However, even though these analyses deemed appropriate due to the clustering of the four individual sites and the zero-inflated aspect, there is still correlation horizontally and vertically that needs to be accounted for in the model. These models were constructed in order to test the validity of a zero-inflated approach.
+
+Four models were fit in this phase:
+
+-   A baseline model with just random intercepts
+
+-   A full model in which exposure, water depth, and slope were included in both the structural and conditional formulas
+
+-   A reduced model in which water depth and slope were included in the conditional formual and exposure was only included in the structural formula.
+
+-   A further reduced model which did not have random intercepts
+
+| Model                                 | AIC    | Intercept Variance |
+|---------------------------------------|--------|--------------------|
+| Baseline model with random intercepts | 807.79 | 15.27              |
+| Full model with random intercepts     | 712.90 | 1.722e-09          |
+| Reduced model with random intercepts  | 707.68 | 1.373e-09          |
+| Reduced model, singular intercept     | 705.68 | NA                 |
+
+When incorporating the zero-inflated model aspect with the same predictors, the AIC was drastically decreased in comparison to the simply mixed-effect models, indicating that the zero inflated aspect was significant. Furthermore, the p-value of the zero-inflated aspect of these models was always statistically significant. The first model fitted was again a baseline model. This model had very large variance for the random intercepts.
+
+The full model had significantly better fit than the baseline model, but the variance for the random intercepts dropped to a value that was essentially zero. This indicates that inclusion of our explanatory variables makes any differences across clusters negligible to the point of non-existence. However, theoretically and statistically it did not make sense for exposure to be included in the conditional formula and for water depth or slope to be included in the structural formula. This was validated by the full model which indicated that these variables were insignificant in these respective formulas. For reference:
+
+-   The structural formula explains whether an observation is an inflated zero count or not
+
+-   The conditional formula explains variance in root density when plants are present
+
+Indeed, this was validated by the reduced model which had better fit measures than the full model. However, the lack of significance of the random intercepts remained due to the extremely small variance seen. The final model found that excluding these random intercepts was of statistically significantly better fit. Theoretically, this can be justified due to a potential lack of significant
+
+### III.c. Global Spatial Models
+
+The global spatial models are a less sophisticated approach to addressing spatial correlation between individual observations. In this model, the optimal distance used to consider observations as neighbors or not is held constant across sites. Thus, this model loses some ability for accounting for spatial correlation. The full model here uses water depth and slope in the conditional model and exposure in the structural model.
+
+| Model                           | AIC   | Intercept Variance |
+|---------------------------------|-------|--------------------|
+| Baseline with random intercepts | 734.8 | 13.63              |
+| Full with random intercepts     | 709.6 | 1.042e-09          |
+| Full with singular intercept    | 707.6 | NA                 |
+
+Again, our full model is of better fit than the baseline. This suggests that water depth and slope are statistically significant in predicting root density, while exposure is statistically significant when predicting presence or absence of plant life. Furthermore, we again see that our random intercept variance drops to a near zero level in our full model, indicating that random intercepts are unnecessary. This is confirmed by the final model which has a lower AIC score with no random effects.
+
+### III.d. Site-Specific Spatial Models
+
+The local spatial model employed here is a slightly more sophisticated approach in which the optimum distance for considering individual observations as neighbors is allowed to vary across sites, allowing for a more accurate accounting of spatial correlations. The full model here uses water depth and slope in the conditional model and exposure in the structural model.
+
+| Model                           | AIC    | Intercept Variance |
+|---------------------------------|--------|--------------------|
+| Baseline with random intercepts | 763.12 | 14.71              |
+| Full with random intercepts     | 708.1  | 8.191e-10          |
+| Full with singular intercept    | 706.15 | NA                 |
+
+Overall, previous trends hold true for these models. Our full model is of better fit than our baseline model and we again find that random intercepts become unnecessary when accounting for exposure, water depth, and slope. Lastly, we find that our full model here has a slightly lower AIC score than our global full model.
+
+### **III.e. Site-Specific Logistic Regression Model**
+
+The logistic regression that focuses on purely predicting the presence or absence of plant life is a significantly less complex model. This allows the inclusion of higher order spatial correlation terms which further reduces spatial correlation violatoins. Due to the removal of plant density measures, the significance of water depth and slope was lost, leading to exposure being the sole predictor in the full model. Notably, random intercepts remained statistically significant in this mode. The best model found was the full model with random intercepts included.
+
+| Model                           | AIC    | Intercept Variance |
+|---------------------------------|--------|--------------------|
+| Baseline with random intercepts | 167.3  | 4.904              |
+| Full with random intercepts     | 163.5  | 2.304              |
+| Full with singular intercept    | 190.40 | NA                 |
+
+### **III.f. Model Comparison**
+
+| Model                             | AIC    | P-Value Associated with Exposure | Exposure Odds Ratio |
+|-------------------|------------------|------------------|------------------|
+| Global Zero Inflated              | 707.6  | 5.56e-06 \*\*\*                  | 101                 |
+| Site-Specific Zero Inflated       | 706.15 | 5.58e-06 \*\*\*                  | 100.79              |
+| Site-Specific Logistic Regression | 163.5  | 0.0171 \*                        | 49.43               |
+
+The zero inflated model and the logistic regression have different characteristics that could be more useful for the data and accurately predict presence or absence. The two zero inflated models are complex and interpretation may be difficult. However, both models maintain the nuance provided by root density measures. The observed and predicted values of the site specific zero inflated can be seen graphed in Graph 1. Logistic regression provides a slightly simpler and interpretable model. It does lose some of the detail in the root density that the zero inflated model preserves. In Graph 2, it appears that the model accurately can predict the presence or absence binary response. Based on the observed values of AIC and odds ratios, the logistic regression with site specific spatial lag predictor variables is the best fit for the data.
+
+```{r, warning=FALSE, message=FALSE}
+#| include: false
+library(RCurl)
+library(janitor)
+library(dplyr)
+library(car)
+library(flexplot)
+library(MASS)
+library(ggplot2)
+
+#mixed model libraries
+library(lme4)
+library(HLMdiag)
+library(flexplot)
+library(MuMIn)
+library(glmmTMB) 
+
+#geographic regression libraries
+library(spdep)
+library(deldir)
+
+#for zero inflated
+library(pscl)
+```
+
+```{r, results='hide'}
+#| include: false
+
+data_link <- getURL("https://raw.githubusercontent.com/Cgrossman23/STAT-370-PROJ/refs/heads/main/cleaned_data.csv") 
+wave <- read.csv(text = data_link)
+wave <- as.data.frame(wave)
+
+
+# make all var undercase
+
+wave <- clean_names(wave)
+
+# renaming response variables to better names
+
+colnames(wave)[7] <- "presence_absence_sch"
+colnames(wave)[8] <- "density_sch"
+colnames(wave)[9] <- "presence_absence_typ"
+colnames(wave)[10] <- "density_typ"
+names(wave)
+
+names(wave)
+
+wave[, c(1,2,7:15)] <- lapply(wave[, c(1,2,7:15)], function(x) gsub("[^0-9.]", "", x))
+wave[, c(1,2,7:15)] <- lapply(wave[, c(1,2,7:15)], as.numeric)
+
+str(wave)
+
+unique(wave$transect) 
+unique(wave$site_combined) 
+unique(wave$site_individual)
+unique(wave$exposure)
+
+rows_with_na <- wave[!complete.cases(wave), ] 
+print(rows_with_na)  
+unique(rows_with_na$site_combined)
+wave <- na.omit(wave)
+
+# Summarazing response variables
+wave$presence_absence <- (wave$presence_absence_sch + wave$presence_absence_typ)
+wave$density <- (wave$density_sch + wave$density_typ)
+
+wave <- wave %>% mutate(plant_type = case_when( 
+                presence_absence_typ ==  1 ~ "typ", 
+                presence_absence_sch == 1 ~ "sch", 
+                TRUE ~ NA_character_ ))
+
+
+# Filter for Unexposed and Site
+
+wave$longitude <- ifelse(wave$longitude > 0, -wave$longitude, wave$longitude)
+
+wave2 <- wave %>% filter(exposure == "Unexposed")
+wave3 <- wave %>% filter(exposure == "Exposed")
+
+wave_a <- wave2 %>% filter(site_combined == "A")
+wave_b <- wave2 %>% filter(site_combined == "B")
+wave_c <- wave2 %>% filter(site_combined == "C")
+wave_d <- wave2 %>% filter(site_combined == "D")
+
+wave_a2 <- wave3 %>% filter(site_combined == "A")
+wave_b2 <- wave3 %>% filter(site_combined == "B")
+wave_c2 <- wave3 %>% filter(site_combined == "C")
+wave_d2 <- wave3 %>% filter(site_combined == "D")
+
+wave4 <- rbind(wave_a, wave_b, wave_c, wave_d, wave_a2, wave_b2, wave_c2, wave_d2)
+```
+
+```{r}
+#| include: false
+coords_a <- cbind(wave_a$latitude, wave_a$longitude)
+
+distances <- seq(0.000001, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi_a <- -Inf  
+od_a <- NA
+neighbors_a <- NULL
+weights_a <- NULL
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords_a, d1 = 0, d2 = distances[i]) #insert cords
+  if (sum(card(neighbors)) == 0) { next }
+  dists <- nbdists(neighbors, coords_a) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave_a$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
+  
+  if (!is.na(values[i]) && values[i] > mmi_a) {
+    mmi_a <- values[i]
+    od_a <- distances[i]
+    neighbors_a <- neighbors
+    weights_a <- weights
+  }
+}
+cat("Maximum Moran's I:", mmi_a, "\n")
+cat("Optimal Distance:", od_a, "\n")
+
+plot(neighbors_a,coords_a, col = "red")
+```
+
+```{r}
+#| include: false
+coords_b <- cbind(wave_b$latitude, wave_b$longitude)
+  
+distances <- seq(0.00012, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi_b <- -Inf  
+od_b <- NA
+neighbors_b <- NULL
+weights_b <- NULL
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords_b, d1 = 0, d2 = distances[i]) #insert cords
+  if (sum(card(neighbors)) == 0) { next }
+  dists <- nbdists(neighbors, coords_b) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave_b$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
+  
+  if (!is.na(values[i]) && values[i] > mmi_b) {
+    mmi_b <- values[i]
+    od_b <- distances[i]
+    neighbors_b <- neighbors
+    weights_b <- weights
+  }
+}
+cat("Maximum Moran's I:", mmi_b, "\n")
+cat("Optimal Distance:", od_b, "\n")
+
+plot(neighbors_b,coords_b, col = "red")
+```
+
+```{r}
+#| include: false
+
+coords_c <- cbind(wave_c$latitude, wave_c$longitude)
+  
+distances <- seq(0.000001, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi_c <- -Inf  
+od_c <- NA
+neighbors_c <- NULL
+weights_c <- NULL
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords_c, d1 = 0, d2 = distances[i]) #insert cords
+  if (sum(card(neighbors)) == 0) { next }
+  dists <- nbdists(neighbors, coords_c) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave_c$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
+  
+  if (!is.na(values[i]) && values[i] > mmi_c) {
+    mmi_c <- values[i]
+    od_c <- distances[i]
+    neighbors_c <- neighbors
+    weights_c <- weights
+  }
+}
+cat("Maximum Moran's I:", mmi_c, "\n")
+cat("Optimal Distance:", od_c, "\n")
+
+plot(neighbors_c,coords_c, col = "red")
+```
+
+```{r}
+#| include: false
+
+coords_d <- cbind(wave_d$latitude, wave_d$longitude)
+
+distances <- seq(0.00012, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi_d <- -Inf  
+od_d <- NA
+neighbors_d <- NULL
+weights_d <- NULL
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords_d, d1 = 0, d2 = distances[i]) #insert cords
+  if (sum(card(neighbors)) == 0) { next }
+  dists <- nbdists(neighbors, coords_d) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave_d$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
+  
+  if (!is.na(values[i]) && values[i] > mmi_d) {
+    mmi_d <- values[i]
+    od_d <- distances[i]
+    neighbors_d <- neighbors
+    weights_d <- weights
+  }
+}
+cat("Maximum Moran's I:", mmi_d, "\n")
+cat("Optimal Distance:", od_d, "\n")
+
+plot(neighbors_d,coords_d, col = "red")
+```
+
+```{r}
+#| include: false
+
+coords <- cbind(wave4$latitude, wave4$longitude)
+distances <- seq(0.00012, 0.001, by = 0.000001)
+values <- numeric(length(distances))
+values[] <- NA  
+mmi <- -Inf  
+od <- NA
+neighbors <- NULL
+weights <- NULL
+options(warn = -1)
+for (i in seq_along(distances)) {
+  neighbors <- dnearneigh(coords, d1 = 0, d2 = distances[i]) #insert cords
+  if (sum(card(neighbors)) == 0) { next }
+  dists <- nbdists(neighbors, coords) # and here
+  weights <- nb2listw(neighbors, 
+                        glist = lapply(dists, function(x) 1 / x), 
+                        style = "W", 
+                        zero.policy = TRUE)
+  moran_results <- moran(wave4$density, weights, length(neighbors), Szero(weights)) #insert density here
+  values[i] <- moran_results$I
+  
+  if (!is.na(values[i]) && values[i] > mmi) {
+    mmi <- values[i]
+    od <- distances[i]
+    neighbors <- neighbors
+    weights <- weights
+  }
+}
+cat("Maximum Moran's I:", mmi, "\n")
+cat("Optimal Distance:", od, "\n")
+
+plot(neighbors,coords, col = "red")
+
+# Compute Moran’s I
+moran_test <- moran.test(wave4$density, listw = weights, zero.policy = TRUE)
+print(moran_test)
+
+# Global Moran's I is highly significant.
+```
+
+```{r}
+#| include: false
+
+wave4$spatial_lag1 <- NA
+wave4$spatial_lag2 <- NA
+wave4$spatial_lag3 <- NA
+
+weights_list <- list(
+  "A" = weights_a,
+  "D" = weights_b,
+  "F" = weights_c,
+  "H" = weights_d
+)
+
+for (s in unique(wave4$site_individual)) {
+  if (s %in% names(weights_list)) {
+    site_subset <- wave4[wave4$site_individual == s, ]
+    W <- weights_list[[s]]
+    wave4$spatial_lag1[wave4$site_individual == s] <- lag.listw(W, site_subset$density)
+    wave4$spatial_lag2[wave4$site_individual == s] <- lag.listw(W, wave4$spatial_lag1[wave4$site_individual == s])
+    wave4$spatial_lag3[wave4$site_individual == s] <- lag.listw(W, wave4$spatial_lag2[wave4$site_individual == s])
+  } else {
+    wave4$spatial_lag1[wave4$site_individual == s] <- 0
+    wave4$spatial_lag2[wave4$site_individual == s] <- 0
+    wave4$spatial_lag3[wave4$site_individual == s] <- 0
+  }
+}
+```
+
+```{r}
+#| include: false
+
+spatial1 <- glmmTMB(density ~ spatial_lag1 + 
+                              (1 | site_individual),
+                              ziformula = ~ 1,
+                              family = nbinom2,
+                              data = wave4)
+
+summary(spatial1)
+
+spatial2 <- glmmTMB(density ~ water_depth +
+                              slope_use +
+                              spatial_lag1 + 
+                              (1 | site_individual),
+                              ziformula = ~ exposure,
+                              family = nbinom2,
+                              data = wave4)
+ 
+summary(spatial2)
+ 
+anova(spatial2, spatial1)
+
+spatial3 <- glmmTMB(density ~ water_depth +
+                              slope_use +
+                              spatial_lag1,
+                              ziformula = ~ exposure,
+                              family = nbinom2,
+                              data = wave4)
+
+summary(spatial3)
+
+anova(spatial3, spatial2)
+
+wave4$residuals_local <- residuals(spatial3)
+ 
+for (s in c("A", "D", "F", "H")) {
+   site_subset <- wave4[wave4$site_individual == s, ]
+   moran_test <- moran.test(site_subset$residuals_local, weights_list[[s]])
+   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
+ }
+```
+
+```{r}
+#| echo: false
+wave4$predicted_count <- predict(spatial3, type = "response")
+
+ggplot(wave4, aes(x = water_depth, y = density)) +
+  geom_jitter(aes(color = exposure), width = 0.1, height = 0.1, alpha = 0.4) +
+  geom_smooth(aes(y = predicted_count, color = exposure), method = "loess", se = FALSE, size = 1.2) +
+  labs(
+    x = "Water Depth",
+    y = "Observed Count",
+    title = "Observed vs. Predicted Counts by Water Depth and Exposure",
+    color = "Exposure"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+#| include: false
+
+ wave4$presence_absence <- (wave4$presence_absence_sch + wave4$presence_absence_typ)
+
+spatial_l1 <- glmmTMB(presence_absence ~ spatial_lag1 + 
+                                        spatial_lag2 + 
+                                        spatial_lag3 + 
+                                        (1 | site_individual), 
+                                        data = wave4, 
+                                        family = binomial(link = "logit")) 
+
+summary(spatial_l1)
+
+spatial_l2 <- glmmTMB(presence_absence ~ exposure + 
+                                        spatial_lag1 + 
+                                        spatial_lag2 + 
+                                        spatial_lag3 + 
+                                        (1 | site_individual), 
+                                        data = wave4, 
+                                        family = binomial(link = "logit"))
+ 
+summary(spatial_l2)
+
+anova(spatial_l2, spatial_l1)
+
+spatial_l3 <- glmmTMB(presence_absence ~ exposure + 
+                                        spatial_lag1 + 
+                                        spatial_lag2 + 
+                                        spatial_lag3, 
+                                        data = wave4, 
+                                        family = binomial(link = "logit"))
+ 
+summary(spatial_l3)
+
+anova(spatial_l3, spatial_l2)
+ 
+wave4$residuals_logistic <- residuals(spatial_l2)
+ 
+for (s in c("A", "D", "F", "H")) {
+   site_subset <- wave4[wave4$site_individual == s, ]
+   moran_test <- moran.test(site_subset$residuals_logistic, weights_list[[s]])
+   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
+}
+```
+
+```{r}
+#| echo: false
+
+wave4$predicted_prob <- predict(spatial_l2, type = "response")
+
+ggplot(wave4, aes(x = predicted_prob, y = presence_absence, color = exposure)) +
+  geom_jitter(height = 0.05, width = 0, alpha = 0.3) +
+  geom_smooth(method = "loess", formula = y ~ x, se = FALSE, size = 1.2) +
+  labs(
+    x = "Predicted Probability",
+    y = "Observed Presence (1) / Absence (0)",
+    title = "Observed vs. Predicted Probabilities by Exposure",
+    color = "Exposure"
+  ) +
+  theme_minimal()
+```
 
 # IV. Conclusion
 
@@ -181,31 +687,14 @@ Although a valid logistic regression was an output of continued data analysis, t
 
 \newpage
 
-# Appendix
-
-| Model                                                                         | AIC Value |
-|------------------------------------|------------------------------------|
-| Baseline with individual site random intercept                                | 2378.9    |
-| Exposure with individual site random intercept                                | 2370.4    |
-| Water depth, exposure, and individual site random intercept                   | 2366.8    |
-| Water depth, exposure, interaction term, and individual site random intercept | 2364.8    |
-| Water depth, exposure, and individual site random intercept, zero inflated    | 712.5     |
-
-: Mixed Effect Models AIC Values
-
-| Model                             | AIC   | P-Value | Exposure Odds Ration |
-|-----------------------------------|-------|---------|----------------------|
-| Global Zero Inflated              | 716   | 0.00044 | 353.01               |
-| Site-Specific Zero Inflated       | 709.3 | 0.0178  | 144.43               |
-| Site-Specific Logistic Regression | 159.7 | \*      | 101.94               |
-
-: Final Model Testing Values
+# Appendix {.appendix}
 
 ## Code
 
 #### I. Libraries
 
 ```{r, warning=FALSE, message=FALSE}
+#| echo: false
 library(RCurl)
 library(janitor)
 library(dplyr)
@@ -595,6 +1084,7 @@ model1 <- lmer(density ~ 1 + (1 | site_individual), data = wave4)
 summary(model1)
 r_squared <- r.squaredGLMM(model1)
 print(r_squared)
+AIC(model1)
 ```
 
 ##### V.b. Exp - Exposure Nested in site_individual
@@ -604,6 +1094,7 @@ model2 <- lmer(density ~ exposure + (1 | site_individual), data = wave4)
 r_squared2 <- r.squaredGLMM(model2)
 print(r_squared2)
 anova(model2, model1)
+summary(model2)
 ```
 
 ##### V.c. Exp - Full Explanatory Variables
@@ -613,32 +1104,73 @@ model3 <- lmer(density ~  water_depth + exposure + (1 | site_individual), data =
 r_squared3 <- r.squaredGLMM(model3)
 print(r_squared3)
 anova(model3, model2)
+summary(model3)
 ```
 
 ##### V.d. Exp - Interaction term with Exposure nested in site_combined
 
 ```{r}
 model4 <- lmer(density ~ exposure*water_depth + (1 | site_individual), data = wave4)
+summary(model4)
 r_squared4 <- r.squaredGLMM(model4)
 print(r_squared4)
 anova(model4, model3)
 ```
 
-##### V.e. ZIM with Mixed Effect
+#### VI. ZIM with Mixed Effects
 
 ```{r}
- model01 <- glmmTMB(density ~ exposure + water_depth + (1 | site_individual),
-                    ziformula = ~ 1,
-                    family = "genpois",
-                    data = wave4)
+model01 <- glmmTMB(
+  density ~ (1 | site_individual),
+  ziformula = ~ 1,
+  family = nbinom2,  
+  data = wave4
+)
+
  summary(model01)
  r.squaredGLMM(model01)
  AIC(model01)
 ```
 
-#### VI. Final Models
+```{r}
+model02 <- glmmTMB(
+  density ~ water_depth + slope_use + exposure + (1 | site_individual),
+  ziformula = ~ water_depth + slope_use + exposure,
+  family = nbinom2,
+  data = wave4
+)
 
-##### VI.a. Global ZIM
+summary(model02)
+anova(model02, model01)
+```
+
+```{r}
+model03 <- glmmTMB(
+  density ~ water_depth + slope_use + (1 | site_individual),
+  ziformula = ~ exposure,
+  family = nbinom2,
+  data = wave4
+)
+
+summary(model03)
+anova(model03, model02)
+```
+
+```{r}
+model04 <- glmmTMB(
+  density ~ water_depth + slope_use,
+  ziformula = ~ exposure,
+  family = nbinom2,
+  data = wave4
+)
+
+summary(model04)
+anova(model04, model03)
+```
+
+#### VII. Final Models
+
+##### VII.a. Global ZIM
 
 ```{r}
 coords <- cbind(wave4$latitude, wave4$longitude)
@@ -708,28 +1240,40 @@ for (s in unique(wave4$site_individual)) {
 ```
 
 ```{r}
-
 wave4$spatial_lag1_g <- lag.listw(weights, wave4$density)
-wave4$spatial_lag2_g <- lag.listw(weights, wave4$spatial_lag1_g)
-wave4$spatial_lag3_g <- lag.listw(weights, wave4$spatial_lag2_g) 
 
-spatial_G_NB <- glmmTMB(density ~ exposure + spatial_lag1_g + (1 | site_individual),
-   ziformula = ~ 1,
-   family = nbinom1,
-   data = wave4
- )
+spatial_G_1 <- glmmTMB(density ~ spatial_lag1_g + 
+                                (1 | site_individual),
+                                ziformula = ~ 1,
+                                family = nbinom1,
+                                data = wave4)
  
- summary(spatial_G_NB)
+summary(spatial_G_1)
  
-spatial_G_GP <- glmmTMB(density ~ exposure + spatial_lag1_g + (1 | site_individual),
-   ziformula = ~ 1,
-   family = genpois,
-   data = wave4
- )
+spatial_G_2 <- glmmTMB(density ~ water_depth + 
+                                slope_use + 
+                                spatial_lag1_g + 
+                                (1 | site_individual),
+                                ziformula = ~ exposure,
+                                family = nbinom2,
+                                data = wave4)
 
-summary(spatial_G_GP)
+summary(spatial_G_2)
 
-wave4$residuals <- residuals(spatial_G_NB)
+anova(spatial_G_2, spatial_G_1)
+
+spatial_G_3 <- glmmTMB(density ~ water_depth + 
+                                slope_use + 
+                                spatial_lag1_g,
+                                ziformula = ~ exposure,
+                                family = nbinom2,
+                                data = wave4)
+
+summary(spatial_G_3)
+
+anova(spatial_G_3, spatial_G_2)
+
+wave4$residuals <- residuals(spatial_G_3)
 for (s in c("A", "D", "F", "H")) {
    site_subset <- wave4[wave4$site_individual == s, ]
    moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
@@ -737,68 +1281,133 @@ for (s in c("A", "D", "F", "H")) {
  }
 ```
 
-##### VI.b. Site Specific Correlated - ZIM
+```{r}
+wave4$predicted_count <- predict(spatial_G_3, type = "response")
+
+ggplot(wave4, aes(x = water_depth, y = density)) +
+  geom_jitter(aes(color = exposure), width = 0.1, height = 0.1, alpha = 0.4) +
+  geom_smooth(aes(y = predicted_count, color = exposure), method = "loess", se = FALSE, size = 1.2) +
+  labs(
+    x = "Water Depth",
+    y = "Observed Count",
+    title = "Observed vs. Predicted Counts by Water Depth and Exposure",
+    color = "Exposure"
+  ) +
+  theme_minimal()
+```
+
+##### VII.b. Site Specific Correlated - ZIM
 
 ```{r}
- spatial <- glmmTMB(density ~ exposure + water_depth + spatial_lag1 + (1 | site_individual),
-   ziformula = ~ 1,
-   family = nbinom1,
-   data = wave4
- )
+spatial1 <- glmmTMB(density ~ spatial_lag1 + 
+                              (1 | site_individual),
+                              ziformula = ~ 1,
+                              family = nbinom2,
+                              data = wave4)
+
+summary(spatial1)
+
+spatial2 <- glmmTMB(density ~ water_depth +
+                              slope_use +
+                              spatial_lag1 + 
+                              (1 | site_individual),
+                              ziformula = ~ exposure,
+                              family = nbinom2,
+                              data = wave4)
  
- # exposure, water_depth, slope_use, cost_small, fetch_projected, speed_limit
- spatial2 <- glmmTMB(density ~ exposure + cost_small + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual),
-   ziformula = ~ 1,
-   family = genpois,
-   data = wave4
- )
+summary(spatial2)
  
- summary(spatial)
- summary(spatial2)
+anova(spatial2, spatial1)
+
+spatial3 <- glmmTMB(density ~ water_depth +
+                              slope_use +
+                              spatial_lag1,
+                              ziformula = ~ exposure,
+                              family = nbinom2,
+                              data = wave4)
+
+summary(spatial3)
+
+anova(spatial3, spatial2)
+
+wave4$residuals_local <- residuals(spatial3)
  
- wave4$residuals <- residuals(spatial)
- 
- for (s in c("A", "D", "F", "H")) {
+for (s in c("A", "D", "F", "H")) {
    site_subset <- wave4[wave4$site_individual == s, ]
-   moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
+   moran_test <- moran.test(site_subset$residuals_local, weights_list[[s]])
    print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
  }
  
- r.squaredGLMM(spatial)
- wave4$predicted_count <- predict(spatial, type = "response")
- 
- ggplot(wave4, aes(x = predicted_count, y = density)) +
-   geom_jitter(width = 0.2, height = 0.2, alpha = 0.4) +
-   geom_smooth(method = "loess", color = "red") +
-   labs(x = "Predicted Count", y = "Observed Count",
-        title = "Observed vs. Predicted (ZINB1 Model)")
+wave4$predicted_count <- predict(spatial3, type = "response")
+
+ggplot(wave4, aes(x = water_depth, y = density)) +
+  geom_jitter(aes(color = exposure), width = 0.1, height = 0.1, alpha = 0.4) +
+  geom_smooth(aes(y = predicted_count, color = exposure), method = "loess", se = FALSE, size = 1.2) +
+  labs(
+    x = "Water Depth",
+    y = "Observed Count",
+    title = "Observed vs. Predicted Counts by Water Depth and Exposure",
+    color = "Exposure"
+  ) +
+  theme_minimal()
+
 ```
 
-##### VI.c. Site Specific Correlated - Logistic Regression
+##### VII.c. Site Specific Correlated - Logistic Regression
 
 ```{r}
  wave4$presence_absence <- (wave4$presence_absence_sch + wave4$presence_absence_typ)
- 
- spatial3 <- glmmTMB(presence_absence ~ exposure + cost_small + spatial_lag1 + spatial_lag2 + spatial_lag3 + (1 | site_individual), 
-                     data = wave4, 
-                     family = binomial(link = "logit"))
- 
- summary(spatial3)
- 
- wave4$residuals <- residuals(spatial3)
- 
- for (s in c("A", "D", "F", "H")) {
-   site_subset <- wave4[wave4$site_individual == s, ]
-   moran_test <- moran.test(site_subset$residuals, weights_list[[s]])
-   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
- }
 
- wave4$predicted_prob <- predict(spatial3, type = "response")
+spatial_l1 <- glmmTMB(presence_absence ~ spatial_lag1 + 
+                                        spatial_lag2 + 
+                                        spatial_lag3 + 
+                                        (1 | site_individual), 
+                                        data = wave4, 
+                                        family = binomial(link = "logit")) 
+
+summary(spatial_l1)
+
+spatial_l2 <- glmmTMB(presence_absence ~ exposure + 
+                                        spatial_lag1 + 
+                                        spatial_lag2 + 
+                                        spatial_lag3 + 
+                                        (1 | site_individual), 
+                                        data = wave4, 
+                                        family = binomial(link = "logit"))
  
- ggplot(wave4, aes(x = predicted_prob, y = presence_absence)) +
-   geom_jitter(height = 0.05, width = 0, alpha = 0.3) +
-   geom_smooth(method = "loess", formula = y ~ x, se = FALSE, color = "blue") +
-   labs(x = "Predicted Probability", y = "Observed Presence (1) / Absence (0)",
-        title = "Observed vs. Predicted (Logistic GLMM)") +
-   theme_minimal()
+summary(spatial_l2)
+
+anova(spatial_l2, spatial_l1)
+
+spatial_l3 <- glmmTMB(presence_absence ~ exposure + 
+                                        spatial_lag1 + 
+                                        spatial_lag2 + 
+                                        spatial_lag3, 
+                                        data = wave4, 
+                                        family = binomial(link = "logit"))
+ 
+summary(spatial_l3)
+
+anova(spatial_l3, spatial_l2)
+ 
+wave4$residuals_logistic <- residuals(spatial_l2)
+ 
+for (s in c("A", "D", "F", "H")) {
+   site_subset <- wave4[wave4$site_individual == s, ]
+   moran_test <- moran.test(site_subset$residuals_logistic, weights_list[[s]])
+   print(paste("Moran's I for site", s, ":", moran_test$estimate["Moran I statistic"]))
+}
+
+wave4$predicted_prob <- predict(spatial_l2, type = "response")
+
+ggplot(wave4, aes(x = predicted_prob, y = presence_absence, color = exposure)) +
+  geom_jitter(height = 0.05, width = 0, alpha = 0.3) +
+  geom_smooth(method = "loess", formula = y ~ x, se = FALSE, size = 1.2) +
+  labs(
+    x = "Predicted Probability",
+    y = "Observed Presence (1) / Absence (0)",
+    title = "Observed vs. Predicted Probabilities by Exposure",
+    color = "Exposure"
+  ) +
+  theme_minimal()
 ```
