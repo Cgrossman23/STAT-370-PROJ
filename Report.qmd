@@ -5,9 +5,10 @@ author: Ashley Ciss, Coleton Grossman, William Quinn
 editor: visual
 indent: true
 ---
+
 # I. Introduction
 
-Along the St. Mary’s River in Michigan, there are shores being affected by the wake of freighter ships passing through. These wakes can be between one and three meters large and eventually stir up the areas of the river and cause plant growth disruption. In order to understand the effect of these waves, the density of the plants, bulrush and cattail need to be found. In this specific study, there were four different collection sites, each with a control side and an exposed side. Each site had key enviromental variables measured. Some of the important ones include exposure, water depth, slope, fetch, and cost distance. The main goal of the data analysis was to create a predictive model that would output the density or presence/absence of these plants in this river.
+Along the St. Mary’s River in Michigan, there are shores being affected by the wake of freighter ships passing through. These wakes can be between one and three meters large and eventually stir up the areas of the river and cause plant growth disruption. In order to understand the effect of these waves, the density of the plants, bulrush and cattail need to be found. In this specific study, there were four different collection sites, each with a control side and an exposed side. Each site had key environmental variables measured. Some of the important ones include exposure, water depth, slope, fetch, and cost distance. The main goal of the data analysis was to create a predictive model that would output the density or presence/absence of these plants in this river.
 
 Due to the spatial nature of the sites, there was spatial correlation and cluster correlation. Not only was each sight correlated with one another, there were transects vertical and horizontal that also contributed to the correlation. The spatial element of these sites play a significant role in understanding and creating an explanatory model. Understanding what the river looks like as well as the sites was one of the most important parts of the process. The data also did not follow a standard discrete distribution, so there were multiple tests completed to find the best fitting distribution for the data, which was a negative binomial distribution. Using both the correlation restrictions and the client’s needs, multiple models were created and tested against each other in order to assess fit. There were different types of models that can be created to accurately represent the data, such as mixed effects, zero inflated models, and logistic regression. The best model for the data that accurately predict the outcome of presence or absence was the logistic regression. Once the best model was found, there was a Bayesian analysis completed because the spatial correlation aspect does not need to be included in the model.
 
@@ -41,7 +42,7 @@ Pseudo-code:
 
 // Step 1: Extract spatial coordinates
 
-Set coordinates_matrix to the combination of latitude and longitude columns from the dataset
+Set coordinates_matrix to the combination of latitude and longitude columns from the data set
 
 // Step 2: Define a sequence of distance thresholds to test
 
